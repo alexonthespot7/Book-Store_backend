@@ -32,7 +32,7 @@ public interface BookRepository extends CrudRepository<Book, Long> {
 	List<BooksInCurrentCart> findBooksInBacket(Long backetid);
 
 	//  in use
-	@Query(value = "SELECT bo.id AS bookid, title, author, isbn, book_year, price, url, ca.name AS category FROM book AS bo JOIN category AS ca ON (ca.categoryid=bo.categoryid) JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) WHERE NOT current GROUP BY bo.id ORDER BY SUM(quantity) DESC LIMIT 10", nativeQuery = true)
+	@Query(value = "SELECT bo.id AS bookid, title, author, isbn, book_year, price, url FROM book AS bo JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) WHERE NOT current GROUP BY bo.id ORDER BY SUM(quantity) DESC LIMIT 10", nativeQuery = true)
 	List<SpecialBook> topSales();
 	
 	List<Book> findByCategory(Category category);

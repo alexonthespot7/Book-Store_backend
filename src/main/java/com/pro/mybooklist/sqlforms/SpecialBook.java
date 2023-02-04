@@ -7,6 +7,5 @@ public interface SpecialBook {
 	String getIsbn();
 	Integer getBook_year();
 	Double getPrice();
-	String getCategory();
 	String getUrl();
 }
