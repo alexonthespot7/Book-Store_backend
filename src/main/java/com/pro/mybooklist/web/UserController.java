@@ -306,9 +306,7 @@ public class UserController {
 	private boolean verify(String verificationCode) {
 		Optional<User> user = urepository.findByVerificationCode(verificationCode);
 
-		if (user.isEmpty() || user.get().isAccountVerified()) {
-			return false;
-		} else {
+		if (user.isPresent() && !user.get().isAccountVerified()) {
 			User currentUser = user.get();
 
 			currentUser.setVerificationCode(null);
@@ -321,6 +319,8 @@ public class UserController {
 				barepository.save(new Backet(true, currentUser));
 			}
 			return true;
+		} else {
+			return false;
 		}
 	}
 }

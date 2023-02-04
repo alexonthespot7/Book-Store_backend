@@ -437,10 +437,10 @@ public class MainController {
 	public @ResponseBody List<TotalOfBacket> getTotalOfOrder(@PathVariable("orderid") Long orderId) {
 		Optional<Order> order = orepository.findById(orderId);
 		
-		if (order.isEmpty()) {
-			return null;
-		} else {
+		if (order.isPresent()) {
 			return barepository.findTotalOfOrder(orderId);
+		} else {
+			return null;
 		}
 	}
 
