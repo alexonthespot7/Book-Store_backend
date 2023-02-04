@@ -267,7 +267,7 @@ public class UserController {
 		helper.setSubject(subject);
 
 		content = content.replace("[[name]]", user.getUsername());
-		String mainURL = "http://localhost:3000" + endpoint + user.getVerificationCode();
+		String mainURL = "https://bookstore-axos.netlify.app" + endpoint + user.getVerificationCode();
 
 		content = content.replace("[[URL]]", mainURL);
 
