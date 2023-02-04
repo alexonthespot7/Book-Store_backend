@@ -1,11 +1,17 @@
 package com.pro.mybooklist.model;
 
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 public class Book {
@@ -16,14 +22,20 @@ public class Book {
 	private String title, author, isbn;
 	private int bookYear;
 	private double price;
-	
-	@ManyToOne
-	@JoinColumn(name="categoryid")
-	private Category category;
-	
-	public Book() {}
+	private String url;
 
-	public Book(String title, String author, String isbn, int bookYear, double price, Category category) {
+	@ManyToOne
+	@JoinColumn(name = "categoryid")
+	private Category category;
+
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
+	List<BacketBook> backetbooks;
+
+	public Book() {
+	}
+
+	public Book(String title, String author, String isbn, int bookYear, double price, Category category, String url) {
 		super();
 		this.title = title;
 		this.author = author;
@@ -31,16 +43,17 @@ public class Book {
 		this.bookYear = bookYear;
 		this.price = price;
 		this.category = category;
+		this.url = url;
 	}
-	
+
 	public Long getId() {
 		return id;
 	}
-	
-	public void setId(Long id) { 
+
+	public void setId(Long id) {
 		this.id = id;
 	}
-	
+
 	public String getTitle() {
 		return title;
 	}
@@ -80,13 +93,29 @@ public class Book {
 	public void setPrice(double price) {
 		this.price = price;
 	}
-	
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
 	public Category getCategory() {
 		return category;
 	}
-	
+
 	public void setCategory(Category category) {
 		this.category = category;
 	}
-	
+
+	public List<BacketBook> getBacketbooks() {
+		return backetbooks;
+	}
+
+	public void setBacketbooks(List<BacketBook> backetbooks) {
+		this.backetbooks = backetbooks;
+	}
+
 }
