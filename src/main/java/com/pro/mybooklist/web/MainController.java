@@ -48,6 +48,7 @@ import com.pro.mybooklist.model.OrderInfo;
 import com.pro.mybooklist.model.OrderPasswordInfo;
 import com.pro.mybooklist.model.OrderRepository;
 import com.pro.mybooklist.model.QuantityInfo;
+import com.pro.mybooklist.model.SenderInfo;
 import com.pro.mybooklist.model.User;
 import com.pro.mybooklist.model.UserRepository;
 import com.pro.mybooklist.sqlforms.BooksInCurrentCart;
@@ -803,6 +804,13 @@ public class MainController {
 		}
 	}
 	
+	//Method not in use for bookstore project, but is used for my personal website
+	@RequestMapping(value = "/sendmail", method=RequestMethod.POST) 
+	public ResponseEntity<?> sendSelfEmail(@RequestBody SenderInfo senderInfo) throws MessagingException, UnsupportedEncodingException {
+		sendEmailFromWebsite(senderInfo);
+		return new ResponseEntity<>("Email was sent successfully", HttpStatus.OK);
+	}
+	
 	private void sendOrderInfoEmail(String username, String emailTo, Long orderId, String password) throws MessagingException, UnsupportedEncodingException {
 		String toAddress = emailTo;
 		String fromAddress = "aleksei.application.noreply@gmail.com";
@@ -873,6 +881,32 @@ public class MainController {
 		content = content.replace("[[status]]", status);
 
 		content = content.replace("[[ORDERID]]", orderId.toString());
+
+		helper.setText(content, true);
+
+		mailSender.send(message);
+	}
+	
+	private void sendEmailFromWebsite(SenderInfo senderInfo) throws MessagingException, UnsupportedEncodingException {
+		String toAddress = "aleksei.shevelenkov@gmail.com";
+		String fromAddress = "aleksei.application.noreply@gmail.com";
+		String senderName = "Your website";
+		String subject = "You received a new message from website";
+		String content = "Hi, Aleksei!<br><br>" + "You have just recieved a new message from [[name]] via your personal website:<br>"
+				+ "<p>[[message]]</p><br>" + "The email to get in touch: [[email]]<br><br>" + "Thank you,<br>" + "AXOS inc.";
+
+		MimeMessage message = mailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message);
+
+		helper.setFrom(fromAddress, senderName);
+		helper.setTo(toAddress);
+		helper.setSubject(subject);
+
+		content = content.replace("[[name]]", senderInfo.getName());
+		
+		content = content.replace("[[message]]", senderInfo.getMessage());
+
+		content = content.replace("[[email]]", senderInfo.getEmail());
 
 		helper.setText(content, true);
 

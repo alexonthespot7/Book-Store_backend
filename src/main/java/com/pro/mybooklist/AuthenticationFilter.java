@@ -31,7 +31,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 	private UserRepository urepository;
 	
 	@Override
-	public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
 		
 		String jws = request.getHeader(HttpHeaders.AUTHORIZATION);
 		

@@ -40,7 +40,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		.sessionManagement()
 		.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		.authorizeRequests()
-		.antMatchers(HttpMethod.POST, "/login", "/signup", "/verify", "/resetpassword", "/books", "/addbook/*", "/reduceitem/*", "/showcart", "/gettotal", "/makesale", "/checkordernumber", "/orders").permitAll()
+		.antMatchers(HttpMethod.POST, "/login", "/signup", "/verify", "/resetpassword", "/books", "/addbook/*", "/reduceitem/*", "/showcart", "/gettotal", "/makesale", "/checkordernumber", "/orders", "/sendmail").permitAll()
 		.antMatchers(HttpMethod.GET, "/books/*", "/books", "/api/books", "/categories", "/api/categories", "/topsales", "/booksinbacket/*", "/getordertotal/*", "/orders/*", "/createbacket", "/listids/*").permitAll()
 		.antMatchers(HttpMethod.DELETE, "/deletebook/*").permitAll()
 		.antMatchers(HttpMethod.POST, "/changepassword", "/additem/*", "/makesale/*").authenticated()
@@ -72,12 +72,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(userDetailsService)
-		.passwordEncoder(new BCryptPasswordEncoder());
+			.passwordEncoder(new BCryptPasswordEncoder());
 	}
 	
 	@Bean
-	public AuthenticationManager getAuthenticationManager() throws 
-	Exception {
+	public AuthenticationManager getAuthenticationManager() 
+			throws Exception {
 		return authenticationManager();
 	}
 	
