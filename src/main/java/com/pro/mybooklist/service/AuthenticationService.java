@@ -2,7 +2,7 @@ package com.pro.mybooklist.service;
 
 import java.util.Date;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;

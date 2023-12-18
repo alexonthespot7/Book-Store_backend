@@ -3,10 +3,11 @@ package com.pro.mybooklist.web;
 import java.io.UnsupportedEncodingException;
 import java.util.Optional;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,19 +27,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pro.mybooklist.model.AccountCredentials;
+import com.pro.mybooklist.httpforms.AccountCredentials;
+import com.pro.mybooklist.httpforms.EmailInfo;
+import com.pro.mybooklist.httpforms.PasswordInfo;
+import com.pro.mybooklist.httpforms.RoleInfo;
+import com.pro.mybooklist.httpforms.SignupCredentials;
+import com.pro.mybooklist.httpforms.TokenInfo;
 import com.pro.mybooklist.model.Backet;
 import com.pro.mybooklist.model.BacketRepository;
-import com.pro.mybooklist.model.EmailInfo;
-import com.pro.mybooklist.model.PasswordInfo;
-import com.pro.mybooklist.model.RoleInfo;
-import com.pro.mybooklist.model.SignupCredentials;
-import com.pro.mybooklist.model.TokenInfo;
 import com.pro.mybooklist.model.User;
 import com.pro.mybooklist.model.UserRepository;
 import com.pro.mybooklist.service.AuthenticationService;
-
-import net.bytebuddy.utility.RandomString;
 
 @RestController
 public class UserController {
@@ -122,7 +121,7 @@ public class UserController {
 			throws UnsupportedEncodingException, MessagingException {
 		BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
 		String hashPwd = bc.encode(creds.getPassword());
-		String randomCode = RandomString.make(64);
+		String randomCode = RandomStringUtils.random(64);
 
 		if (urepository.findByUsername(creds.getUsername()).isPresent()) {
 			return new ResponseEntity<>("Username is already in use", HttpStatus.CONFLICT);
@@ -226,7 +225,7 @@ public class UserController {
 			User currentUser = user.get();
 
 			if (currentUser.isAccountVerified()) {
-				String password = RandomString.make(15);
+				String password = RandomStringUtils.random(15);
 
 				BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
 				String hashPwd = bc.encode(password);

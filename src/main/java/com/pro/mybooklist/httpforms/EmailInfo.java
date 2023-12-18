@@ -1,4 +1,4 @@
-package com.pro.mybooklist.model;
+package com.pro.mybooklist.httpforms;
 
 public class EmailInfo {
 	private String email;

@@ -5,10 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-import javax.transaction.Transactional;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.transaction.Transactional;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 //import org.slf4j.Logger;
@@ -30,33 +31,32 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pro.mybooklist.MyUser;
-import com.pro.mybooklist.model.AddressInfo;
+import com.pro.mybooklist.httpforms.AddressInfo;
+import com.pro.mybooklist.httpforms.BookInfo;
+import com.pro.mybooklist.httpforms.BookQuantityInfo;
+import com.pro.mybooklist.httpforms.NotUserAddressInfo;
+import com.pro.mybooklist.httpforms.OrderInfo;
+import com.pro.mybooklist.httpforms.OrderPasswordInfo;
+import com.pro.mybooklist.httpforms.QuantityInfo;
+import com.pro.mybooklist.httpforms.SenderInfo;
 import com.pro.mybooklist.model.Backet;
 import com.pro.mybooklist.model.BacketBook;
 import com.pro.mybooklist.model.BacketBookKey;
 import com.pro.mybooklist.model.BacketBookRepository;
 import com.pro.mybooklist.model.BacketRepository;
 import com.pro.mybooklist.model.Book;
-import com.pro.mybooklist.model.BookInfo;
-import com.pro.mybooklist.model.BookQuantityInfo;
 import com.pro.mybooklist.model.BookRepository;
 import com.pro.mybooklist.model.Category;
 import com.pro.mybooklist.model.CategoryRepository;
-import com.pro.mybooklist.model.NotUserAddressInfo;
 import com.pro.mybooklist.model.Order;
-import com.pro.mybooklist.model.OrderInfo;
-import com.pro.mybooklist.model.OrderPasswordInfo;
 import com.pro.mybooklist.model.OrderRepository;
-import com.pro.mybooklist.model.QuantityInfo;
-import com.pro.mybooklist.model.SenderInfo;
 import com.pro.mybooklist.model.User;
 import com.pro.mybooklist.model.UserRepository;
-import com.pro.mybooklist.sqlforms.BooksInCurrentCart;
+import com.pro.mybooklist.sqlforms.BookInCurrentCart;
 import com.pro.mybooklist.sqlforms.QuantityOfBacket;
-import com.pro.mybooklist.sqlforms.SpecialBook;
+import com.pro.mybooklist.sqlforms.RawBookInfo;
 import com.pro.mybooklist.sqlforms.TotalOfBacket;
 
-import net.bytebuddy.utility.RandomString;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -220,7 +220,7 @@ public class MainController {
 	//method of creating backet for users without profile
 	@RequestMapping("/createbacket")
 	public @ResponseBody BookInfo createBacketForNonLogged() {
-		String password = RandomString.make(15);
+		String password = RandomStringUtils.random(15);
 		BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
 		String hashPwd = bc.encode(password);
 		
@@ -256,7 +256,7 @@ public class MainController {
 						int quantity = backetBook.getQuantity();
 						backetBook.setQuantity(quantity + bookQuantity.getQuantity());
 					} else {
-						backetBook = new BacketBook(bbKey, bookQuantity.getQuantity(), backet, book);
+						backetBook = new BacketBook(bookQuantity.getQuantity(), backet, book);
 					}
 
 					bbrepository.save(backetBook);
@@ -305,7 +305,7 @@ public class MainController {
 							int quantity = backetBook.getQuantity();
 							backetBook.setQuantity(quantity + quantityInfo.getQuantity());
 						} else {
-							backetBook = new BacketBook(bbKey, quantityInfo.getQuantity(), currentBacket, book);
+							backetBook = new BacketBook(quantityInfo.getQuantity(), currentBacket, book);
 						}
 
 						bbrepository.save(backetBook);
@@ -367,12 +367,12 @@ public class MainController {
 	// WAiting for implementation
 	@RequestMapping(value = "/showcart/{userid}")
 	@PreAuthorize("authentication.getPrincipal().getId() == #userId")
-	public @ResponseBody List<BooksInCurrentCart> showCurrentCart(@PathVariable("userid") Long userId) {
-		return (List<BooksInCurrentCart>) repository.findBooksInCurrentBacketByUserid(userId);
+	public @ResponseBody List<BookInCurrentCart> showCurrentCart(@PathVariable("userid") Long userId) {
+		return (List<BookInCurrentCart>) repository.findBooksInCurrentBacketByUserid(userId);
 	}
 	
 	@RequestMapping(value = "/showcart", method=RequestMethod.POST)
-	public @ResponseBody List<BooksInCurrentCart> showBooksInBacket(@RequestBody BookInfo bookInfo) {
+	public @ResponseBody List<BookInCurrentCart> showBooksInBacket(@RequestBody BookInfo bookInfo) {
 		Optional<Backet> optBacket = barepository.findById(bookInfo.getBookid());
 		if (optBacket.isPresent() && optBacket.get().getUser() == null) {
 			Backet backet = optBacket.get();
@@ -389,7 +389,7 @@ public class MainController {
 	}
 	
 	@RequestMapping(value = "/booksinbacket/{orderid}")
-	public @ResponseBody List<BooksInCurrentCart> showBooksInOrder(@PathVariable("orderid") Long orderId) {
+	public @ResponseBody List<BookInCurrentCart> showBooksInOrder(@PathVariable("orderid") Long orderId) {
 		Optional<Order> optOrder = orepository.findById(orderId);
 		
 		if (optOrder.isPresent()) {
@@ -677,7 +677,7 @@ public class MainController {
 			if (bc.matches(addressInfo.getPassword(), backet.getPasswordHash())) {
 				if (bbrepository.findByBacket(backet).size() > 0) {
 					backet.setCurrent(false);
-					String passwordRandom = RandomString.make(15);
+					String passwordRandom = RandomStringUtils.random(15);
 					String hashPwd = bc.encode(passwordRandom);
 					
 					Order order = new Order(addressInfo.getFirstname(), addressInfo.getLastname(), addressInfo.getCountry(), addressInfo.getCity(), addressInfo.getStreet(), addressInfo.getPostcode(), addressInfo.getEmail(), backet, addressInfo.getNote(), hashPwd);
@@ -714,7 +714,7 @@ public class MainController {
 				if (booksInBacket.size() > 0) {
 					User user = optUser.get();
 					
-					String passwordRandom = RandomString.make(15);
+					String passwordRandom = RandomStringUtils.random(15);
 					BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
 					String hashPwdOrder = bc.encode(passwordRandom);
 					
@@ -748,13 +748,13 @@ public class MainController {
 	// BACKEND - DONE, FRONT - NOT YET, SEC - CONFIGured
 	@RequestMapping("/pastsales")
 	@PreAuthorize("isAuthenticated()")
-	public @ResponseBody List<List<BooksInCurrentCart>> listPastSales(Authentication auth) {
+	public @ResponseBody List<List<BookInCurrentCart>> listPastSales(Authentication auth) {
 		if (auth.getPrincipal().getClass().toString().equals("class com.pro.mybooklist.MyUser")) {
 			MyUser myUser = (MyUser) auth.getPrincipal();
 
 			List<Long> nonCurrentIds = barepository.findNotCurrentByUserid(myUser.getId());
 
-			List<List<BooksInCurrentCart>> nestedList = new ArrayList<List<BooksInCurrentCart>>();
+			List<List<BookInCurrentCart>> nestedList = new ArrayList<List<BookInCurrentCart>>();
 			for (int i = 0; i < nonCurrentIds.size(); i++) {
 				nestedList.add(repository.findBooksInPastSaleByBacketid(nonCurrentIds.get(i)));
 			}
@@ -765,7 +765,7 @@ public class MainController {
 	}
 
 	@RequestMapping("/topsales")
-	public @ResponseBody List<SpecialBook> listTopSales() {
+	public @ResponseBody List<RawBookInfo> listTopSales() {
 		return repository.topSales();
 	}
 	

@@ -1,4 +1,4 @@
-package com.pro.mybooklist.model;
+package com.pro.mybooklist.httpforms;
 //class created to receive post request body from my personal website. Not in use in the bookstore project;
 
 public class SenderInfo {
