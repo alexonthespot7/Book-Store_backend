@@ -194,15 +194,6 @@ public class MainController {
 		}
 	}
 
-	// Rest method to find user by username - Backend - DONE, Frontend - NOT IN USE
-	// YET, MAY NOT IMPLEMENT LATER
-	// @RequestMapping("/users/{username}")
-	// @PreAuthorize("authentication.getPrincipal().getUsername() == #username")
-	// public @ResponseBody Optional<User>
-	// restUserByUsername(@PathVariable("username") String username) {
-	// return (Optional<User>) urepository.findByUsername(username);
-	// }
-
 	// Rest method to load user by id - Backend - DONE, Frontend - DONE
 	@RequestMapping(value = "/users/{id}")
 	@PreAuthorize("authentication.getPrincipal().getId() == #userId")

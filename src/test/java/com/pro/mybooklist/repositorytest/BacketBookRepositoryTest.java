@@ -70,11 +70,11 @@ public class BacketBookRepositoryTest {
 		this.createBacketBookDefaultQuantityNoUser("Little Women 2", "Other");
 		List<BacketBook> backetBooks = (List<BacketBook>) backetBookRepository.findAll();
 		assertThat(backetBooks).hasSize(2);
-		
+
 		// Testing backetBook creating with backet with user;
 		BacketBook newBacketBookUser1 = this.createBacketBookDefaultQuantityUser("user1", "Little Women 3", "Other");
 		assertThat(newBacketBookUser1.getId()).isNotNull();
-		
+
 		this.createBacketBookDefaultQuantityUser("user2", "Little Women 4", "Other");
 		backetBooks = (List<BacketBook>) backetBookRepository.findAll();
 		assertThat(backetBooks).hasSize(4);
@@ -90,16 +90,106 @@ public class BacketBookRepositoryTest {
 		this.createBacketBookCustomQuantityNoUser(3, "Little Women 2", "Other");
 		List<BacketBook> backetBooks = (List<BacketBook>) backetBookRepository.findAll();
 		assertThat(backetBooks).hasSize(2);
-		
+
 		// Testing backetBook creating with backet with user;
 		BacketBook newBacketBookUser1 = this.createBacketBookCustomQuantityUser(2, "user1", "Little Women 3", "Other");
 		assertThat(newBacketBookUser1.getId()).isNotNull();
-		
+
 		this.createBacketBookCustomQuantityUser(4, "user2", "Little Women 4", "Other");
 		backetBooks = (List<BacketBook>) backetBookRepository.findAll();
 		assertThat(backetBooks).hasSize(4);
 	}
+
+	@Test
+	@Rollback
+	public void testFindAllAndFindById() {
+		List<BacketBook> backetBooks = (List<BacketBook>) backetBookRepository.findAll();
+		assertThat(backetBooks).isEmpty();
+
+		BacketBookKey wrongKey = new BacketBookKey(Long.valueOf(2), Long.valueOf(2));
+		Optional<BacketBook> optionalBacketBook = backetBookRepository.findById(wrongKey);
+		assertThat(optionalBacketBook).isNotPresent();
+
+		BacketBook newBacketBook = this.createBacketBookDefaultQuantityNoUser("Little Women", "Other");
+		BacketBookKey goodKey = newBacketBook.getId();
+
+		optionalBacketBook = backetBookRepository.findById(goodKey);
+		assertThat(optionalBacketBook).isPresent();
+
+		this.createBacketBookDefaultQuantityNoUser("Little Women 2", "Other");
+
+		backetBooks = (List<BacketBook>) backetBookRepository.findAll();
+		assertThat(backetBooks).hasSize(2);
+	}
 	
+	@Test
+	@Rollback
+	public void testFindByBacket() {
+		Backet emptyBacket = this.createBacketNoUser();
+		List<BacketBook> backetBooks = backetBookRepository.findByBacket(emptyBacket);
+		assertThat(backetBooks).isEmpty();
+		
+		BacketBook newBacketBook = this.createBacketBookDefaultQuantityNoUser("Little Women", "Other");
+		Backet backet = newBacketBook.getBacket();
+		
+		backetBooks = backetBookRepository.findByBacket(backet);
+		assertThat(backetBooks).hasSize(1);
+		
+		this.createBacketBookDefaultQuantityUser("user1", "Little Women", "Other");
+		this.createBacketBookDefaultQuantityUser("user1", "Little Women 2", "Other");
+		BacketBook backetBook3User1 = this.createBacketBookCustomQuantityUser(2, "user1", "Fight Club", "Thriller");
+		Backet backetOfUser1 = backetBook3User1.getBacket();
+		
+		backetBooks = backetBookRepository.findByBacket(backetOfUser1);
+		assertThat(backetBooks).hasSize(3);
+	}
+
+	@Test
+	@Rollback
+	public void testUpdate() {
+		BacketBook backetBook = this.createBacketBookDefaultQuantityNoUser("Little Women", "Other");
+		backetBook.setQuantity(3);
+		backetBookRepository.save(backetBook);
+		
+		assertThat(backetBook.getQuantity()).isEqualTo(3);
+	}
+	
+	@Test
+	@Rollback
+	public void testDeleteByIdAndDeleteAll() {
+		BacketBook backetBookToDelete = this.createBacketBookCustomQuantityNoUser(2, "Little Women", "Other");
+		BacketBookKey key = backetBookToDelete.getId();
+		backetBookRepository.deleteById(key);
+		
+		Optional<BacketBook> optionalBacketBook = backetBookRepository.findById(key);
+		assertThat(optionalBacketBook).isNotPresent();
+		
+		this.createBacketBookCustomQuantityNoUser(2, "Little Women", "Other");
+		this.createBacketBookCustomQuantityNoUser(2, "Little Women 2", "Other");
+		backetBookRepository.deleteAll();
+		
+		List<BacketBook> backetBooks = (List<BacketBook>) backetBookRepository.findAll();
+		assertThat(backetBooks).isEmpty();
+	}
+	
+	@Test
+	@Rollback
+	public void testDeleteByBacket() {
+		BacketBook newBacketBook = this.createBacketBookDefaultQuantityNoUser("Little Women", "Other");
+		Backet backet = newBacketBook.getBacket();
+
+		long quantityOfDeletedBacketBooks = backetBookRepository.deleteByBacket(backet);
+		assertThat(quantityOfDeletedBacketBooks).isEqualTo(1);
+
+		this.createBacketBookDefaultQuantityUser("user1", "Little Women", "Other");
+		this.createBacketBookDefaultQuantityUser("user1", "Little Women 2", "Other");
+		BacketBook backetBook3User1 = this.createBacketBookCustomQuantityUser(2, "user1", "Fight Club", "Thriller");
+		Backet backetOfUser1 = backetBook3User1.getBacket();
+
+		quantityOfDeletedBacketBooks = backetBookRepository.deleteByBacket(backetOfUser1);
+		assertThat(quantityOfDeletedBacketBooks).isEqualTo(3);
+	}
+
 	private BacketBook createBacketBookCustomQuantityNoUser(int quantity, String title, String categoryName) {
 		Backet backet = this.createBacketNoUser();
 		Book book = this.createBook(title, categoryName);
@@ -109,8 +199,9 @@ public class BacketBookRepositoryTest {
 
 		return newBacketBook;
 	}
-	
-	private BacketBook createBacketBookCustomQuantityUser(int quantity, String username, String title, String categoryName) {
+
+	private BacketBook createBacketBookCustomQuantityUser(int quantity, String username, String title,
+			String categoryName) {
 		User user = this.createUser(username);
 
 		Backet backet = this.createBacketWithUser(user);
@@ -121,7 +212,7 @@ public class BacketBookRepositoryTest {
 
 		return newBacketBook;
 	}
-	
+
 	private BacketBook createBacketBookDefaultQuantityNoUser(String title, String categoryName) {
 		Backet backet = this.createBacketNoUser();
 		Book book = this.createBook(title, categoryName);
@@ -148,14 +239,18 @@ public class BacketBookRepositoryTest {
 		Optional<User> optionalUser = urepository.findByUsername(username);
 		if (optionalUser.isPresent())
 			return optionalUser.get();
-		
+
 		User newUser = new User(username, username, username, username, "USER", username, true);
 		urepository.save(newUser);
-		
+
 		return newUser;
 	}
-	
+
 	private Backet createBacketWithUser(User user) {
+		List<Backet> currentBackets = backetRepository.findCurrentByUserid(user.getId());
+		if (currentBackets.size() != 0)
+			return currentBackets.get(0);
+
 		Backet newBacket = new Backet(true, user);
 		backetRepository.save(newBacket);
 
