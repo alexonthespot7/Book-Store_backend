@@ -14,13 +14,10 @@ public interface BookRepository extends CrudRepository<Book, Long> {
 	List<BookInCurrentCart> findBooksInCurrentBacketByUserid(Long userId);
 
 	@Query(value = "SELECT bo.id AS bookid FROM book AS bo JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) JOIN users AS u ON (u.id = ba.userid) WHERE u.id = ?1 AND current", nativeQuery = true)
-	List<Long> idsOfBooksInCurrentCart(Long userId);
+	List<Long> findIdsOfBooksInCurrentCart(Long userId);
 	
-	@Query(value = "SELECT bo.id AS bookid FROM book AS bo JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) WHERE ba.backetid = ?1 AND current", nativeQuery = true)
-	List<Long> idsOfBooksByBacketid(Long backetId);
-	
-	@Query(value = "SELECT bo.id AS bookid, ba.backetid, title, author, isbn, book_year, price, url, ca.name AS category, bb.quantity FROM book AS bo JOIN category AS ca ON (ca.categoryid = bo.categoryid) JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) WHERE ba.backetid = ?1 AND NOT current", nativeQuery = true)
-	List<BookInCurrentCart> findBooksInPastSaleByBacketid(Long backetid);
+	@Query(value = "SELECT bo.id AS bookid FROM book AS bo JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) WHERE ba.backetid = ?1", nativeQuery = true)
+	List<Long> findIdsOfBooksByBacketid(Long backetId);
 	
 	@Query(value = "SELECT bo.id AS bookid, ba.backetid, title, author, isbn, book_year, price, url, ca.name AS category, bb.quantity FROM book AS bo JOIN category AS ca ON (ca.categoryid = bo.categoryid) JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) JOIN orders as o ON (o.backetid = ba.backetid) WHERE orderid = ?1", nativeQuery = true)
 	List<BookInCurrentCart> findBooksInOrder(Long orderid);
@@ -29,7 +26,7 @@ public interface BookRepository extends CrudRepository<Book, Long> {
 	List<BookInCurrentCart> findBooksInBacket(Long backetid);
 
 	@Query(value = "SELECT bo.id AS bookid, title, author, isbn, book_year, price, url FROM book AS bo JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) WHERE NOT current GROUP BY bo.id ORDER BY SUM(quantity) DESC LIMIT 10", nativeQuery = true)
-	List<RawBookInfo> topSales();
+	List<RawBookInfo> findTopSales();
 	
 	List<Book> findByCategory(Category category);
 	

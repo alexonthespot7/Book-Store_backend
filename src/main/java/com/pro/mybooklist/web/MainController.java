@@ -331,7 +331,7 @@ public class MainController {
 	@RequestMapping("/listids/{backetid}")
 	public @ResponseBody List<Long> showIdsOfBooksByBacketid(@PathVariable("backetid") Long backetId) {
 		if (barepository.findById(backetId).isPresent() && barepository.findById(backetId).get().getUser() == null) {
-			return repository.idsOfBooksByBacketid(backetId);
+			return repository.findIdsOfBooksByBacketid(backetId);
 		} else {
 			return null;
 		}
@@ -345,7 +345,7 @@ public class MainController {
 			Optional<User> optUser = urepository.findByUsername(myUser.getUsername());
 
 			if (optUser.isPresent()) {
-				return repository.idsOfBooksInCurrentCart(optUser.get().getId());
+				return repository.findIdsOfBooksInCurrentCart(optUser.get().getId());
 			} else {
 				return null;
 			}
@@ -401,13 +401,13 @@ public class MainController {
 
 	@RequestMapping("/getcurrtotal")
 	@PreAuthorize("isAuthenticated()")
-	public @ResponseBody List<TotalOfBacket> getCurrentCartTotal(Authentication auth) {
+	public @ResponseBody TotalOfBacket getCurrentCartTotal(Authentication auth) {
 		if (auth.getPrincipal().getClass().toString().equals("class com.pro.mybooklist.MyUser")) {
 			MyUser myUser = (MyUser) auth.getPrincipal();
 			Optional<User> optUser = urepository.findByUsername(myUser.getUsername());
 
 			if (optUser.isPresent()) {
-				return barepository.findTotalOfCurrent(optUser.get().getId());
+				return barepository.findTotalOfCurrentCart(optUser.get().getId());
 			} else {
 				return null;
 			}
@@ -417,7 +417,7 @@ public class MainController {
 	}
 	
 	@RequestMapping(value="/gettotal", method = RequestMethod.POST)
-	public @ResponseBody List<TotalOfBacket> getTotalByBacketid(@RequestBody BookInfo bookInfo) {
+	public @ResponseBody TotalOfBacket getTotalByBacketid(@RequestBody BookInfo bookInfo) {
 		Optional<Backet> optBacket = barepository.findById(bookInfo.getBookid());
 		
 		if (optBacket.isPresent()) {
@@ -435,7 +435,7 @@ public class MainController {
 	}
 	
 	@RequestMapping("/getordertotal/{orderid}")
-	public @ResponseBody List<TotalOfBacket> getTotalOfOrder(@PathVariable("orderid") Long orderId) {
+	public @ResponseBody TotalOfBacket getTotalOfOrder(@PathVariable("orderid") Long orderId) {
 		Optional<Order> order = orepository.findById(orderId);
 		
 		if (order.isPresent()) {
@@ -756,7 +756,7 @@ public class MainController {
 
 			List<List<BookInCurrentCart>> nestedList = new ArrayList<List<BookInCurrentCart>>();
 			for (int i = 0; i < nonCurrentIds.size(); i++) {
-				nestedList.add(repository.findBooksInPastSaleByBacketid(nonCurrentIds.get(i)));
+				nestedList.add(repository.findBooksInBacket(nonCurrentIds.get(i)));
 			}
 			return nestedList;
 		} else {
@@ -766,7 +766,7 @@ public class MainController {
 
 	@RequestMapping("/topsales")
 	public @ResponseBody List<RawBookInfo> listTopSales() {
-		return repository.topSales();
+		return repository.findTopSales();
 	}
 	
 	@RequestMapping(value="/checkordernumber", method=RequestMethod.POST)
