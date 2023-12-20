@@ -150,6 +150,11 @@ public class MybooklistApplication {
 			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
 			String hashPwd = bc.encode(password);
 			
+			
+			User unverifiedUser = new User("Firstname", "Lastname", "userunver", hashPwd, "USER", "mymaild@gmail.com", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@", false);
+
+			urepository.save(unverifiedUser);
+			
 			User newUser1 = new User("First", "Userok", "user", hashPwd, "USER", "mymail@gmail.com", true);
 			User newUser2 = new User("Second", "userRole", "user2", hashPwd, "USER", "mymail232@gmail.com", true);
 			User newAdmin = new User("First", "Admin", "admin", hashPwd, "ADMIN", "mymail2@gmail.com", true);

@@ -55,7 +55,7 @@ public class OrderRepositoryTest {
 	private OrderRepository orepository;
 
 	@BeforeAll
-	public void resetUserRepo() {
+	public void resetRepos() {
 		crepository.deleteAll();
 		urepository.deleteAll();
 		backetRepository.deleteAll();

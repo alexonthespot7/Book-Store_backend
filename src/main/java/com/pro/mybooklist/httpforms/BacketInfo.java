@@ -1,20 +1,20 @@
 package com.pro.mybooklist.httpforms;
 
-public class BookInfo {
-	private Long bookid;
+public class BacketInfo {
+	private Long id;
 	private String password;
 	
-	public BookInfo(Long bookid, String password) {
-		this.bookid = bookid;
+	public BacketInfo(Long id, String password) {
+		this.id = id;
 		this.password = password;
 	}
 
-	public Long getBookid() {
-		return bookid;
+	public Long getId() {
+		return id;
 	}
 
-	public void setBookid(Long bookid) {
-		this.bookid = bookid;
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public String getPassword() {

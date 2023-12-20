@@ -1,6 +1,6 @@
 package com.pro.mybooklist.httpforms;
 
-public class NotUserAddressInfo {
+public class AddressInfoNoAuthentication {
 	private String firstname;
 	private String lastname;
 	private String country;
@@ -12,6 +12,22 @@ public class NotUserAddressInfo {
 	private Long backetid;
 	private String password;
 	
+	public AddressInfoNoAuthentication() {}
+	
+	public AddressInfoNoAuthentication(String firstname, String lastname, String country, String city, String street,
+			String postcode, String email, String note, Long backetid, String password) {
+		this.firstname = firstname;
+		this.lastname = lastname;
+		this.country = country;
+		this.city = city;
+		this.street = street;
+		this.postcode = postcode;
+		this.email = email;
+		this.note = note;
+		this.backetid = backetid;
+		this.password = password;
+	}
+
 	public String getFirstname() {
 		return firstname;
 	}

@@ -5,6 +5,15 @@ public class BookQuantityInfo {
 	private Long bookid;
 	private String password;
 	
+	public BookQuantityInfo() {}
+	
+	public BookQuantityInfo(int quantity, Long bookid, String password) {
+		super();
+		this.quantity = quantity;
+		this.bookid = bookid;
+		this.password = password;
+	}
+
 	public int getQuantity() {
 		return quantity;
 	}

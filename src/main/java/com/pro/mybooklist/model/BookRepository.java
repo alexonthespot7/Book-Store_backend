@@ -5,10 +5,12 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 import com.pro.mybooklist.sqlforms.BookInCurrentCart;
 import com.pro.mybooklist.sqlforms.RawBookInfo;
 
+@Repository
 public interface BookRepository extends CrudRepository<Book, Long> {
 	@Query(value = "SELECT bo.id AS bookid, ba.backetid, title, author, isbn, book_year, price, url, ca.name AS category, bb.quantity FROM book AS bo JOIN category AS ca ON (ca.categoryid = bo.categoryid) JOIN backet_book AS bb ON (bb.bookid = bo.id) JOIN backet AS ba ON (ba.backetid = bb.backetid) JOIN users AS u ON (u.id = ba.userid) WHERE u.id = ?1 AND current", nativeQuery = true)
 	List<BookInCurrentCart> findBooksInCurrentBacketByUserid(Long userId);

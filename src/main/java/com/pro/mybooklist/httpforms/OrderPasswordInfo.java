@@ -3,6 +3,9 @@ package com.pro.mybooklist.httpforms;
 public class OrderPasswordInfo {
 	private Long orderid;
 	private String password;
+	
+	public OrderPasswordInfo() {}
+	
 	public OrderPasswordInfo(Long orderid, String password) {
 		this.orderid = orderid;
 		this.password = password;
@@ -19,6 +22,4 @@ public class OrderPasswordInfo {
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	
-	
 }

@@ -15,28 +15,33 @@ import org.slf4j.LoggerFactory;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.httpforms.AddressInfo;
-import com.pro.mybooklist.httpforms.BookInfo;
+import com.pro.mybooklist.httpforms.BacketInfo;
 import com.pro.mybooklist.httpforms.BookQuantityInfo;
-import com.pro.mybooklist.httpforms.NotUserAddressInfo;
+import com.pro.mybooklist.httpforms.AddressInfoNoAuthentication;
 import com.pro.mybooklist.httpforms.OrderInfo;
 import com.pro.mybooklist.httpforms.OrderPasswordInfo;
 import com.pro.mybooklist.httpforms.QuantityInfo;
@@ -85,117 +90,8 @@ public class MainController {
 	@Autowired
 	private JavaMailSender mailSender;
 
-	@GetMapping("/ordersbypassword")
-	public @ResponseBody Order getOrderByIdAndPassword(@RequestBody BookInfo orderInfo) {
-		if (orepository.findById(orderInfo.getBookid()).isPresent()) {
-			Order order = orepository.findById(orderInfo.getBookid()).get();
-
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-
-			if (bc.matches(orderInfo.getPassword(), order.getPassword())) {
-				return order;
-			} else {
-				return null;
-			}
-		} else {
-			return null;
-		}
-	}
-
-	// method of creating backet for users without profile
-	@PostMapping("/createbacket")
-	public @ResponseBody BookInfo createBacketNoAuthentication() {
-		String password = RandomStringUtils.random(15);
-		BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-		String hashPwd = bc.encode(password);
-
-		Backet backet = new Backet(hashPwd);
-		barepository.save(backet);
-
-		return new BookInfo(backet.getBacketid(), password);
-	}
-
-	// the method of adding book to the backet for anonyms users
-	@PostMapping("addbook/{backetid}")
-	public ResponseEntity<?> addBookToNonLoggedCart(@PathVariable("backetid") Long backetId,
-			@RequestBody BookQuantityInfo bookQuantity) {
-		Optional<Backet> optBacket = barepository.findById(backetId);
-
-		if (optBacket.isPresent() && optBacket.get().getUser() == null) {
-			Backet backet = optBacket.get();
-
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-
-			if (bc.matches(bookQuantity.getPassword(), backet.getPasswordHash())) {
-				Optional<Book> optBook = repository.findById(bookQuantity.getBookid());
-
-				if (optBook.isPresent()) {
-					Book book = optBook.get();
-
-					BacketBookKey bbKey = new BacketBookKey(backet.getBacketid(), book.getId());
-					Optional<BacketBook> optBB = bbrepository.findById(bbKey);
-					BacketBook backetBook;
-
-					if (optBB.isPresent()) {
-						backetBook = optBB.get();
-
-						int quantity = backetBook.getQuantity();
-						backetBook.setQuantity(quantity + bookQuantity.getQuantity());
-					} else {
-						backetBook = new BacketBook(bookQuantity.getQuantity(), backet, book);
-					}
-
-					bbrepository.save(backetBook);
-
-					return new ResponseEntity<>("Book was added to cart successfully", HttpStatus.OK);
-				} else {
-					return new ResponseEntity<>("There is no such book" + bookQuantity.getBookid(),
-							HttpStatus.BAD_REQUEST);
-				}
-			} else {
-				return new ResponseEntity<>("The password is wrong!", HttpStatus.BAD_REQUEST);
-			}
-		} else {
-			return new ResponseEntity<>("There is no such backet or this backet is private", HttpStatus.BAD_REQUEST);
-		}
-	}
-
-	@GetMapping("/booksids/{backetid}")
-	public @ResponseBody List<Long> showIdsOfBooksByBacketid(@PathVariable("backetid") Long backetId) {
-		if (barepository.findById(backetId).isPresent() && barepository.findById(backetId).get().getUser() == null) {
-			return repository.findIdsOfBooksByBacketid(backetId);
-		} else {
-			return null;
-		}
-	}
-
-	@RequestMapping(value = "/showcart", method = RequestMethod.GET)
-	public @ResponseBody List<BookInCurrentCart> getBooksInBacketByIdAndPassword(@RequestBody BookInfo bookInfo) {
-		Optional<Backet> optBacket = barepository.findById(bookInfo.getBookid());
-		if (optBacket.isPresent() && optBacket.get().getUser() == null) {
-			Backet backet = optBacket.get();
-
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-			if (bc.matches(bookInfo.getPassword(), backet.getPasswordHash())) {
-				return repository.findBooksInBacket(bookInfo.getBookid());
-			} else {
-				return null;
-			}
-		} else {
-			return null;
-		}
-	}
-	
-	@GetMapping("/booksinbacket/{orderid}")
-	public @ResponseBody List<BookInCurrentCart> getBooksByOrderId(@PathVariable("orderid") Long orderId) {
-		Optional<Order> optOrder = orepository.findById(orderId);
-
-		if (optOrder.isPresent()) {
-			return repository.findBooksInOrder(orderId);
-		} else {
-			return null;
-		}
-	}
+	@Value("${spring.mail.username}")
+	private String springMailUsername;
 
 	@RequestMapping("/users")
 	@PreAuthorize("hasAuthority('ADMIN')")
@@ -369,8 +265,6 @@ public class MainController {
 		return (List<BookInCurrentCart>) repository.findBooksInCurrentBacketByUserid(userId);
 	}
 
-	
-
 	@RequestMapping("/getcurrtotal")
 	@PreAuthorize("isAuthenticated()")
 	public @ResponseBody TotalOfBacket getCurrentCartTotal(Authentication auth) {
@@ -383,35 +277,6 @@ public class MainController {
 			} else {
 				return null;
 			}
-		} else {
-			return null;
-		}
-	}
-
-	@RequestMapping(value = "/gettotal", method = RequestMethod.POST)
-	public @ResponseBody TotalOfBacket getTotalByBacketid(@RequestBody BookInfo bookInfo) {
-		Optional<Backet> optBacket = barepository.findById(bookInfo.getBookid());
-
-		if (optBacket.isPresent()) {
-			Backet backet = optBacket.get();
-
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-			if (bc.matches(bookInfo.getPassword(), backet.getPasswordHash())) {
-				return barepository.findTotalOfBacket(bookInfo.getBookid());
-			} else {
-				return null;
-			}
-		} else {
-			return null;
-		}
-	}
-
-	@RequestMapping("/getordertotal/{orderid}")
-	public @ResponseBody TotalOfBacket getTotalOfOrder(@PathVariable("orderid") Long orderId) {
-		Optional<Order> order = orepository.findById(orderId);
-
-		if (order.isPresent()) {
-			return barepository.findTotalOfOrder(orderId);
 		} else {
 			return null;
 		}
@@ -433,56 +298,6 @@ public class MainController {
 			return new ResponseEntity<>(
 					"Cannot find current cart for this user. Or there is more than one current cart what is forbidden by database logical design",
 					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	@RequestMapping(value = "/reduceitem/{backetid}", method = RequestMethod.POST)
-	@Transactional
-	public ResponseEntity<?> rediceItemNonLogged(@PathVariable("backetid") Long backetId,
-			@RequestBody BookInfo bookInfo) {
-		Optional<Backet> optBacket = barepository.findById(backetId);
-
-		if (optBacket.isPresent() && optBacket.get().getUser() == null) {
-			Backet backet = optBacket.get();
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-
-			if (bc.matches(bookInfo.getPassword(), backet.getPasswordHash())) {
-				Optional<Book> optBook = repository.findById(bookInfo.getBookid());
-
-				if (optBook.isPresent()) {
-					Book book = optBook.get();
-
-					BacketBookKey bbKey = new BacketBookKey(backet.getBacketid(), book.getId());
-					Optional<BacketBook> optBB = bbrepository.findById(bbKey);
-					BacketBook backetBook;
-
-					if (optBB.isPresent()) {
-						backetBook = optBB.get();
-
-						int quantity = backetBook.getQuantity();
-						quantity = quantity - 1;
-
-						if (quantity > 0) {
-							backetBook.setQuantity(quantity);
-							bbrepository.save(backetBook);
-
-							return new ResponseEntity<>("The quantity of the book in the cart was reduced by one",
-									HttpStatus.OK);
-						} else {
-							bbrepository.delete(backetBook);
-							return new ResponseEntity<>("The book was deleted from the cart", HttpStatus.OK);
-						}
-					} else {
-						return new ResponseEntity<>("Cannot find the record in backet_book table", HttpStatus.CONFLICT);
-					}
-				} else {
-					return new ResponseEntity<>("There is no such book", HttpStatus.BAD_REQUEST);
-				}
-			} else {
-				return new ResponseEntity<>("The password is wrong!", HttpStatus.BAD_REQUEST);
-			}
-		} else {
-			return new ResponseEntity<>("There is no such backet or the backet is private", HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -548,46 +363,6 @@ public class MainController {
 		}
 	}
 
-	@RequestMapping(value = "/deletebook/{backetid}", method = RequestMethod.DELETE)
-	@Transactional
-	public ResponseEntity<?> deleteBookNonLogged(@PathVariable("backetid") Long backetId,
-			@RequestBody BookInfo bookInfo) {
-		Optional<Backet> optBacket = barepository.findById(backetId);
-
-		if (optBacket.isPresent() && optBacket.get().getUser() == null) {
-			Backet backet = optBacket.get();
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-
-			if (bc.matches(bookInfo.getPassword(), backet.getPasswordHash())) {
-				Optional<Book> optBook = repository.findById(bookInfo.getBookid());
-
-				if (optBook.isPresent()) {
-					Book book = optBook.get();
-
-					BacketBookKey bbKey = new BacketBookKey(backet.getBacketid(), book.getId());
-					Optional<BacketBook> optBB = bbrepository.findById(bbKey);
-					BacketBook backetBook;
-
-					if (optBB.isPresent()) {
-						backetBook = optBB.get();
-
-						bbrepository.delete(backetBook);
-						return new ResponseEntity<>("The book was deleted from the cart", HttpStatus.OK);
-
-					} else {
-						return new ResponseEntity<>("Cannot find the record in backet_book table", HttpStatus.CONFLICT);
-					}
-				} else {
-					return new ResponseEntity<>("There is no such book", HttpStatus.BAD_REQUEST);
-				}
-			} else {
-				return new ResponseEntity<>("The password is wrong!", HttpStatus.BAD_REQUEST);
-			}
-		} else {
-			return new ResponseEntity<>("The backet does not exist or is prviate", HttpStatus.BAD_REQUEST);
-		}
-	}
-
 	@RequestMapping(value = "/deleteitem/{bookid}")
 	@PreAuthorize("isAuthenticated()")
 	@Transactional
@@ -635,43 +410,6 @@ public class MainController {
 			}
 		} else {
 			return new ResponseEntity<>("Authentication problems", HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	@RequestMapping(value = "/makesale", method = RequestMethod.POST)
-	public @ResponseBody OrderPasswordInfo makeSaleNotLogged(@RequestBody NotUserAddressInfo addressInfo)
-			throws MessagingException, UnsupportedEncodingException {
-		Optional<Backet> optBacket = barepository.findById(addressInfo.getBacketid());
-
-		if (optBacket.isPresent()) {
-			Backet backet = optBacket.get();
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-
-			if (bc.matches(addressInfo.getPassword(), backet.getPasswordHash())) {
-				if (bbrepository.findByBacket(backet).size() > 0) {
-					backet.setCurrent(false);
-					String passwordRandom = RandomStringUtils.random(15);
-					String hashPwd = bc.encode(passwordRandom);
-
-					Order order = new Order(addressInfo.getFirstname(), addressInfo.getLastname(),
-							addressInfo.getCountry(), addressInfo.getCity(), addressInfo.getStreet(),
-							addressInfo.getPostcode(), addressInfo.getEmail(), backet, addressInfo.getNote(), hashPwd);
-					orepository.save(order);
-					barepository.save(backet);
-					sendOrderInfoEmail(addressInfo.getFirstname() + " " + addressInfo.getLastname(),
-							addressInfo.getEmail(), order.getOrderid(), passwordRandom);
-
-					OrderPasswordInfo orderPassword = new OrderPasswordInfo(order.getOrderid(), passwordRandom);
-
-					return orderPassword;
-				} else {
-					return null;
-				}
-			} else {
-				return null;
-			}
-		} else {
-			return null;
 		}
 	}
 
@@ -745,28 +483,6 @@ public class MainController {
 		}
 	}
 
-	@RequestMapping("/topsales")
-	public @ResponseBody List<RawBookInfo> listTopSales() {
-		return repository.findTopSales();
-	}
-
-	@RequestMapping(value = "/checkordernumber", method = RequestMethod.POST)
-	public ResponseEntity<?> checkOrderNumber(@RequestBody BookInfo orderInfo) {
-		if (orepository.findById(orderInfo.getBookid()).isPresent()) {
-			Order order = orepository.findById(orderInfo.getBookid()).get();
-
-			BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-
-			if (bc.matches(orderInfo.getPassword(), order.getPassword())) {
-				return new ResponseEntity<>("The order number and password are correct", HttpStatus.OK);
-			} else {
-				return new ResponseEntity<>("The order password is incorrect", HttpStatus.BAD_REQUEST);
-			}
-		} else {
-			return new ResponseEntity<>("The order with that number DOES NOT exist", HttpStatus.BAD_REQUEST);
-		}
-	}
-
 	// not in use!!!!
 	@RequestMapping(value = "/getcurrquantity")
 	@PreAuthorize("isAuthenticated()")
@@ -796,7 +512,7 @@ public class MainController {
 	private void sendOrderInfoEmail(String username, String emailTo, Long orderId, String password)
 			throws MessagingException, UnsupportedEncodingException {
 		String toAddress = emailTo;
-		String fromAddress = "aleksei.application.noreply@gmail.com";
+		String fromAddress = springMailUsername;
 		String senderName = "No reply";
 		String subject = "Your order information";
 		String content = "Dear [[name]],<br><br>"
@@ -826,7 +542,7 @@ public class MainController {
 	private void sendOrderEmailChanged(String firstname, String lastname, String emailTo, Long orderId)
 			throws MessagingException, UnsupportedEncodingException {
 		String toAddress = emailTo;
-		String fromAddress = "aleksei.application.noreply@gmail.com";
+		String fromAddress = springMailUsername;
 		String senderName = "No reply";
 		String subject = "Your order email changed";
 		String content = "Dear [[name]],<br><br>"
@@ -854,7 +570,7 @@ public class MainController {
 	private void sendStatusChangeEmail(String firstname, String lastname, String emailTo, Long orderId, String status)
 			throws MessagingException, UnsupportedEncodingException {
 		String toAddress = emailTo;
-		String fromAddress = "aleksei.application.noreply@gmail.com";
+		String fromAddress = springMailUsername;
 		String senderName = "No reply";
 		String subject = "Your order status has changed";
 		String content = "Dear [[name]],<br><br>"
@@ -883,7 +599,7 @@ public class MainController {
 
 	private void sendEmailFromWebsite(SenderInfo senderInfo) throws MessagingException, UnsupportedEncodingException {
 		String toAddress = "aleksei.shevelenkov@gmail.com";
-		String fromAddress = "aleksei.application.noreply@gmail.com";
+		String fromAddress = springMailUsername;
 		String senderName = "Your website";
 		String subject = "You received a new message from website";
 		String content = "Hi, Aleksei!<br><br>"
