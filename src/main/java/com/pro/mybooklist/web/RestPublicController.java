@@ -86,7 +86,7 @@ public class RestPublicController {
 	private AuthenticationService jwtService;
 
 	@Autowired
-	AuthenticationManager authenticationManager;
+	private AuthenticationManager authenticationManager;
 
 	@Value("${spring.mail.username}")
 	private String springMailUsername;
@@ -496,11 +496,9 @@ public class RestPublicController {
 		try {
 			this.sendOrderInfoEmail(addressInfo.getFirstname() + " " + addressInfo.getLastname(),
 					addressInfo.getEmail(), order.getOrderid(), passwordRandom);
-			return orderPassword;
 		} catch (MailAuthenticationException e) {
-			return orderPassword;
 		}
-
+		return orderPassword;
 	}
 
 	@PutMapping("/reduceitemnoauth/{backetid}")
@@ -656,7 +654,7 @@ public class RestPublicController {
 
 		mailSender.send(message);
 	}
-	
+
 	private void sendPasswordEmail(User user, String password) throws MessagingException, UnsupportedEncodingException {
 		String toAddress = user.getEmail();
 		String fromAddress = "aleksei.application.noreply@gmail.com";

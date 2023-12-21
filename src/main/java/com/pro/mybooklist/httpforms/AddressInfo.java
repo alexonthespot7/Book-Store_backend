@@ -10,6 +10,20 @@ public class AddressInfo {
 	private String email;
 	private String note;
 	
+	public AddressInfo() {}
+	
+	public AddressInfo(String firstname, String lastname, String country, String city, String street, String postcode,
+			String email, String note) {
+		this.firstname = firstname;
+		this.lastname = lastname;
+		this.country = country;
+		this.city = city;
+		this.street = street;
+		this.postcode = postcode;
+		this.email = email;
+		this.note = note;
+	}
+
 	public String getFirstname() {
 		return firstname;
 	}

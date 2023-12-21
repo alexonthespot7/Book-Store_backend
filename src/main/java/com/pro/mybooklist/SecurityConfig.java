@@ -50,9 +50,10 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.POST, "/signup", "/addbook/*", "/createbacket", "/makesale", "/sendmail").permitAll()
 						.requestMatchers(HttpMethod.PUT, "/reduceitemnoauth/*", "/verify", "/resetpassword").permitAll()
 						.requestMatchers(HttpMethod.DELETE, "/deletebook/*").permitAll()
-						.requestMatchers(HttpMethod.GET, "/users/*", "/showcart/*", "/clearbacket/*", "/pastsales", "/listids", "/reduceitem/*", "/deleteitem/*", "/getcurrtotal", "/getcurrquantity", "/users/*/orders").authenticated()
-						.requestMatchers(HttpMethod.POST, "/changepassword", "/additem/*", "/makesale/*").authenticated()
-						.requestMatchers(HttpMethod.PUT, "/updateuser/*").authenticated()
+						.requestMatchers(HttpMethod.GET, "/users/*", "/showcart/*", "/booksids", "/getcurrenttotal", "/currentbacketquantity", "/users/*/orders").authenticated()
+						.requestMatchers(HttpMethod.POST, "/additem/*", "/makesale/*").authenticated()
+						.requestMatchers(HttpMethod.PUT, "/updateuser/*", "/reduceitem/*", "/changepassword").authenticated()
+						.requestMatchers(HttpMethod.DELETE, "/clearbacket/*", "/deleteitem/*").authenticated()
 						.anyRequest().hasAuthority("ADMIN"))
 				.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.exceptionHandling((exceptionHandling) -> exceptionHandling.authenticationEntryPoint(exceptionHandler));

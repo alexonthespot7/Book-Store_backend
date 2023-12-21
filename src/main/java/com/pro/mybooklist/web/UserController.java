@@ -32,7 +32,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.httpforms.AccountCredentials;
 import com.pro.mybooklist.httpforms.EmailInfo;
 import com.pro.mybooklist.httpforms.PasswordInfo;
@@ -85,51 +87,4 @@ public class UserController {
 		}
 	}
 
-	@RequestMapping(value = "/updateuser/{userid}", method = RequestMethod.PUT)
-	@PreAuthorize("authentication.getPrincipal().getId() == #userId")
-	public ResponseEntity<?> updateUser(@PathVariable("userid") Long userId, @RequestBody User user) {
-		if (urepository.findById(userId).isPresent() && user.getId() == userId) {
-			User userToUpdate = urepository.findById(userId).get();
-
-			userToUpdate.setLastname(user.getLastname());
-			userToUpdate.setFirstname(user.getFirstname());
-			userToUpdate.setCountry(user.getCountry());
-			userToUpdate.setCity(user.getCity());
-			userToUpdate.setStreet(user.getStreet());
-			userToUpdate.setPostcode(user.getPostcode());
-
-			urepository.save(userToUpdate);
-
-			return new ResponseEntity<>("User info was updated successfully", HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>("Bad request", HttpStatus.BAD_REQUEST);
-		}
-	}
-
-	// rest method to change user's password - Backend - DONE, Frontend - DONE
-	@RequestMapping(value = "/changepassword", method = RequestMethod.POST)
-	@PreAuthorize("authentication.getPrincipal().getUsername() == #passwordInfo.getUsername()")
-	public ResponseEntity<?> changePassword(@RequestBody PasswordInfo passwordInfo) {
-		Optional<User> userOptional = urepository.findByUsername(passwordInfo.getUsername());
-		BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-
-		if (userOptional.isPresent()) {
-			User user = userOptional.get();
-
-			if (bc.matches(passwordInfo.getOldPassword(), user.getPassword())) {
-				String hashPwd = bc.encode(passwordInfo.getNewPassword());
-
-				user.setPassword(hashPwd);
-				urepository.save(user);
-
-				return new ResponseEntity<>("The password was changed", HttpStatus.OK);
-			} else {
-				return new ResponseEntity<>("The old password is incorrect", HttpStatus.CONFLICT);
-			}
-
-		} else {
-			return new ResponseEntity<>("Forbidden request", HttpStatus.FORBIDDEN);
-		}
-	}
-	
 }
