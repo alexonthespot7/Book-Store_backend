@@ -265,8 +265,12 @@ public class RestPublicControllerTest {
 			BookQuantityInfo bookQuantityInfo = new BookQuantityInfo(2, Long.valueOf(2), WRONG_PWD);
 			String requestBody = objectMapper.writeValueAsString(bookQuantityInfo);
 			String requestURIBacketNotFound = requestURI + Long.valueOf(2);
-			mockMvc.perform(post(requestURIBacketNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isNotFound()).andExpect(content().string("There is no such backet"));
+			MvcResult result = mockMvc
+					.perform(
+							post(requestURIBacketNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+					.andExpect(status().isNotFound()).andReturn();
+			String message = result.getResponse().getErrorMessage();
+			assertThat(message).isEqualTo("The backet wasn't found by id");
 		}
 
 		@Test
@@ -328,8 +332,12 @@ public class RestPublicControllerTest {
 
 			BookQuantityInfo bookQuantityInfo = new BookQuantityInfo(2, Long.valueOf(2), DEFAULT_PASSWORD);
 			String requestBody = objectMapper.writeValueAsString(bookQuantityInfo);
-			mockMvc.perform(post(requestURIGood).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isNotFound()).andExpect(content().string("There is no such book"));
+			MvcResult result = mockMvc
+					.perform(post(requestURIGood).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+					.andExpect(status().isNotFound()).andReturn();
+
+			String message = result.getResponse().getErrorMessage();
+			assertThat(message).isEqualTo("The book wasn't found by id");
 		}
 
 		@Test
@@ -609,12 +617,16 @@ public class RestPublicControllerTest {
 		public void testReduceItemNoAuthenticationBacketNotFoundCase() throws Exception {
 			String requestURI = "/reduceitemnoauth/";
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), WRONG_PWD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIBacketNotFound = requestURI + Long.valueOf(2);
+			BacketInfo backetInfoNotFound = new BacketInfo(Long.valueOf(2), WRONG_PWD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoNotFound);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(put(requestURIBacketNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isNotFound()).andExpect(content().string("Backet wasn't found by id"));
+			MvcResult result = mockMvc
+					.perform(put(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+					.andExpect(status().isNotFound()).andReturn();
+
+			String message = result.getResponse().getErrorMessage();
+			assertThat(message).isEqualTo("The backet wasn't found by id");
 		}
 
 		@Test
@@ -625,11 +637,11 @@ public class RestPublicControllerTest {
 			Backet backetWithOwner = createBacketWithUser(true, USERNAME);
 			Long backetId = backetWithOwner.getBacketid();
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), WRONG_PWD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIPrivateBacket = requestURI + backetId;
+			BacketInfo backetInfoPrivateBacket = new BacketInfo(backetId, WRONG_PWD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoPrivateBacket);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(put(requestURIPrivateBacket).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(put(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isUnauthorized());
 		}
 
@@ -641,11 +653,11 @@ public class RestPublicControllerTest {
 			Backet backet = createBacketNoUser(true);
 			Long backetId = backet.getBacketid();
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), WRONG_PWD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfoWrongPwd = new BacketInfo(backetId, WRONG_PWD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoWrongPwd);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(put(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(put(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isBadRequest());
 		}
 
@@ -657,13 +669,12 @@ public class RestPublicControllerTest {
 			Backet backet = createBacketNoUser(false);
 			Long backetId = backet.getBacketid();
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), DEFAULT_PASSWORD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfoNotCurrent = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoNotCurrent);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(put(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isConflict())
-					.andExpect(content().string("You can't change not current backet"));
+			mockMvc.perform(put(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+					.andExpect(status().isConflict());
 		}
 
 		@Test
@@ -674,12 +685,16 @@ public class RestPublicControllerTest {
 			Backet backet = createBacketNoUser(true);
 			Long backetId = backet.getBacketid();
 
-			BacketInfo backetInfoWithBookIdBookNotFound = new BacketInfo(Long.valueOf(2), DEFAULT_PASSWORD);
-			String requestBodyBookNotFound = objectMapper.writeValueAsString(backetInfoWithBookIdBookNotFound);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfoGood = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBodyGood = objectMapper.writeValueAsString(backetInfoGood);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(put(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBodyBookNotFound))
-					.andExpect(status().isNotFound()).andExpect(content().string("There is no such book"));
+			MvcResult result = mockMvc.perform(
+					put(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBodyGood))
+					.andExpect(status().isNotFound()).andReturn();
+
+			String message = result.getResponse().getErrorMessage();
+			assertThat(message).isEqualTo("The book wasn't found by id");
 		}
 
 		@Test
@@ -693,12 +708,11 @@ public class RestPublicControllerTest {
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
 			Long bookId = book.getId();
 
-			BacketInfo backetInfoWithBookIdBookNotinBacket = new BacketInfo(bookId, DEFAULT_PASSWORD);
-			String requestBodyBookNotInBacket = objectMapper.writeValueAsString(backetInfoWithBookIdBookNotinBacket);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfo = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBody = objectMapper.writeValueAsString(backetInfo);
+			String requestURIBookNotinBacket = requestURI + bookId;
 
-			mockMvc.perform(
-					put(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBodyBookNotInBacket))
+			mockMvc.perform(put(requestURIBookNotinBacket).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isConflict());
 		}
 
@@ -715,9 +729,9 @@ public class RestPublicControllerTest {
 
 			createBacketBookCustomQuantity(2, book, backet);
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(bookId, DEFAULT_PASSWORD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfo = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBody = objectMapper.writeValueAsString(backetInfo);
+			String requestURIOk = requestURI + bookId;
 
 			mockMvc.perform(put(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk());
@@ -740,9 +754,9 @@ public class RestPublicControllerTest {
 
 			createBacketBookCustomQuantity(1, book, backet);
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(bookId, DEFAULT_PASSWORD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfo = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBody = objectMapper.writeValueAsString(backetInfo);
+			String requestURIOk = requestURI + bookId;
 
 			mockMvc.perform(put(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk());
@@ -759,13 +773,17 @@ public class RestPublicControllerTest {
 		public void testDeleteBookNoAuthenticationBacketNotFoundCase() throws Exception {
 			String requestURI = "/deletebook/";
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), WRONG_PWD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIBacketNotFound = requestURI + Long.valueOf(2);
+			BacketInfo backetInfoNotFound = new BacketInfo(Long.valueOf(2), WRONG_PWD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoNotFound);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(
-					delete(requestURIBacketNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isNotFound()).andExpect(content().string("The backet wasn't found"));
+			MvcResult result = mockMvc
+					.perform(
+							delete(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+					.andExpect(status().isNotFound()).andReturn();
+
+			String message = result.getResponse().getErrorMessage();
+			assertThat(message).isEqualTo("The backet wasn't found by id");
 		}
 
 		@Test
@@ -776,12 +794,11 @@ public class RestPublicControllerTest {
 			Backet backetWithOwner = createBacketWithUser(true, USERNAME);
 			Long backetId = backetWithOwner.getBacketid();
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), WRONG_PWD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIPrivateBacket = requestURI + backetId;
+			BacketInfo backetInfoPrivatBacket = new BacketInfo(backetId, WRONG_PWD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoPrivatBacket);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(
-					delete(requestURIPrivateBacket).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(delete(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isUnauthorized());
 		}
 
@@ -793,11 +810,11 @@ public class RestPublicControllerTest {
 			Backet backet = createBacketNoUser(true);
 			Long backetId = backet.getBacketid();
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), WRONG_PWD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfoWrongPwd = new BacketInfo(backetId, WRONG_PWD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoWrongPwd);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(delete(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(delete(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isBadRequest());
 		}
 
@@ -809,13 +826,12 @@ public class RestPublicControllerTest {
 			Backet backet = createBacketNoUser(false);
 			Long backetId = backet.getBacketid();
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(Long.valueOf(2), DEFAULT_PASSWORD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfoNotCurrent = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBody = objectMapper.writeValueAsString(backetInfoNotCurrent);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(delete(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isConflict())
-					.andExpect(content().string("You can't change not current backet"));
+			mockMvc.perform(delete(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+					.andExpect(status().isConflict());
 		}
 
 		@Test
@@ -826,13 +842,12 @@ public class RestPublicControllerTest {
 			Backet backet = createBacketNoUser(true);
 			Long backetId = backet.getBacketid();
 
-			BacketInfo backetInfoWithBookIdBookNotFound = new BacketInfo(Long.valueOf(2), DEFAULT_PASSWORD);
-			String requestBodyBookNotFound = objectMapper.writeValueAsString(backetInfoWithBookIdBookNotFound);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfo = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBodyBookNotFound = objectMapper.writeValueAsString(backetInfo);
+			String requestURIBookNotFound = requestURI + Long.valueOf(2);
 
-			mockMvc.perform(
-					delete(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBodyBookNotFound))
-					.andExpect(status().isNotFound()).andExpect(content().string("The book wasn't found"));
+			mockMvc.perform(delete(requestURIBookNotFound).contentType(MediaType.APPLICATION_JSON)
+					.content(requestBodyBookNotFound)).andExpect(status().isNotFound());
 		}
 
 		@Test
@@ -846,12 +861,12 @@ public class RestPublicControllerTest {
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
 			Long bookId = book.getId();
 
-			BacketInfo backetInfoWithBookIdBookNotinBacket = new BacketInfo(bookId, DEFAULT_PASSWORD);
-			String requestBodyBookNotInBacket = objectMapper.writeValueAsString(backetInfoWithBookIdBookNotinBacket);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfo = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBody = objectMapper.writeValueAsString(backetInfo);
+			String requestURIBookNotInBacket = requestURI + bookId;
 
 			mockMvc.perform(
-					delete(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBodyBookNotInBacket))
+					delete(requestURIBookNotInBacket).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isConflict());
 		}
 
@@ -869,9 +884,9 @@ public class RestPublicControllerTest {
 
 			createBacketBookCustomQuantity(3, book, backet);
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(bookId, DEFAULT_PASSWORD);
+			BacketInfo backetInfoWithBookId = new BacketInfo(backetId, DEFAULT_PASSWORD);
 			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			String requestURIOk = requestURI + bookId;
 
 			mockMvc.perform(delete(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk());
@@ -893,9 +908,9 @@ public class RestPublicControllerTest {
 
 			createBacketBookCustomQuantity(1, book, backet);
 
-			BacketInfo backetInfoWithBookId = new BacketInfo(bookId, DEFAULT_PASSWORD);
-			String requestBody = objectMapper.writeValueAsString(backetInfoWithBookId);
-			String requestURIOk = requestURI + backetId;
+			BacketInfo backetInfo = new BacketInfo(backetId, DEFAULT_PASSWORD);
+			String requestBody = objectMapper.writeValueAsString(backetInfo);
+			String requestURIOk = requestURI + bookId;
 
 			mockMvc.perform(delete(requestURIOk).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk());
@@ -925,11 +940,11 @@ public class RestPublicControllerTest {
 		public void testMakeSaleNoAuthenticationEmptyBacketCase() throws Exception {
 			String requestURI = "/makesale";
 
-			Backet emptyBacket = createBacketNoUser(false);
+			Backet emptyBacket = createBacketNoUser(true);
 			Long bakcetId = emptyBacket.getBacketid();
 
 			AddressInfoNoAuthentication addressInfoEmptyBacket = new AddressInfoNoAuthentication(FIRSTNAME, LASTNAME,
-					COUNTRY, CITY, STREET, POSTCODE, EMAIL, NOTE, bakcetId, WRONG_PWD);
+					COUNTRY, CITY, STREET, POSTCODE, EMAIL, NOTE, bakcetId, DEFAULT_PASSWORD);
 			String requestBodyEmptyBacket = objectMapper.writeValueAsString(addressInfoEmptyBacket);
 
 			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyEmptyBacket))
@@ -1196,7 +1211,7 @@ public class RestPublicControllerTest {
 
 			if (springMailUsername.equals("default_value")) {
 				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-						.andExpect(status().isInternalServerError());
+						.andExpect(status().isPartialContent());
 
 				assertThat(user.isAccountVerified()).isTrue();
 			}
@@ -1210,7 +1225,7 @@ public class RestPublicControllerTest {
 
 			if (springMailUsername.equals("default_value")) {
 				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-						.andExpect(status().isInternalServerError());
+						.andExpect(status().isPartialContent());
 
 				assertThat(user.isAccountVerified()).isTrue();
 			}
@@ -1395,7 +1410,7 @@ public class RestPublicControllerTest {
 			TokenInfo tokenInfo = new TokenInfo(token);
 			String requestBody = objectMapper.writeValueAsString(tokenInfo);
 			mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isInternalServerError());
+					.andExpect(status().isPartialContent());
 		}
 
 		@Test
@@ -1472,7 +1487,7 @@ public class RestPublicControllerTest {
 			urepository.save(user);
 
 			mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isInternalServerError());
+					.andExpect(status().isPartialContent());
 			assertThat(user.isAccountVerified()).isTrue();
 			backets = (List<Backet>) backetRepository.findAll();
 			assertThat(backets).hasSize(1);

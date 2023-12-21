@@ -4,6 +4,8 @@ public class BacketInfo {
 	private Long id;
 	private String password;
 	
+	public BacketInfo() {}
+	
 	public BacketInfo(Long id, String password) {
 		this.id = id;
 		this.password = password;
