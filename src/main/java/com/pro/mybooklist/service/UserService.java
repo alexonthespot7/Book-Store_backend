@@ -18,11 +18,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.httpforms.AccountCredentials;
 import com.pro.mybooklist.httpforms.EmailInfo;
+import com.pro.mybooklist.httpforms.PasswordInfo;
 import com.pro.mybooklist.httpforms.SignupCredentials;
 import com.pro.mybooklist.httpforms.TokenInfo;
 import com.pro.mybooklist.model.Backet;
@@ -60,75 +64,14 @@ public class UserService {
 	// Login method
 	public ResponseEntity<?> getToken(AccountCredentials credentials) {
 		String emailOrUsername = credentials.getUsername();
-
 		User user = this.findUserByEmailOrUsername(emailOrUsername);
-
-		this.handleAccountUnverified(user);
+		this.handleAccountUnverifiedCase(user);
 
 		String username = user.getUsername();
 		String password = credentials.getPassword();
-
 		User authenticatedUser = this.authenticateUser(username, password);
 
 		return returnAuthenticationInfo(authenticatedUser);
-	}
-
-	// Signup method
-	public ResponseEntity<?> signUp(SignupCredentials credentials)
-			throws MessagingException, UnsupportedEncodingException {
-		String username = credentials.getUsername();
-		String email = credentials.getEmail();
-
-		this.checkUsernameOrEmailInUse(username, email);
-
-		User newUser = this.createUnverifiedUserBySignupCredentials(credentials);
-
-		try {
-			mailService.sendVerificationEmail(newUser);
-
-			return new ResponseEntity<>("We sent verification link to your email address :)", HttpStatus.OK);
-		} catch (MailAuthenticationException e) {
-			this.verifyUser(newUser);
-
-			return new ResponseEntity<>("Registration went well, you can login now", HttpStatus.ACCEPTED);
-		}
-	}
-
-	// Verification method
-	public ResponseEntity<?> verifyUser(TokenInfo tokenInfo) {
-		String token = tokenInfo.getToken();
-
-		User user = this.findUserByVerificationCode(token);
-
-		if (user.isAccountVerified())
-			return new ResponseEntity<>("User is already verified", HttpStatus.CONFLICT);
-
-		this.verifyUserAndCreateCurrentBacket(user);
-
-		return new ResponseEntity<>("Verification went well", HttpStatus.OK);
-	}
-
-	// Reset password by email method:
-	public ResponseEntity<?> resetPassword(EmailInfo emailInfo)
-			throws MessagingException, UnsupportedEncodingException {
-		String email = emailInfo.getEmail();
-
-		User user = this.findUserByEmail(email);
-
-		this.handleAccountUnverified(user);
-
-		String password = RandomStringUtils.random(15);
-
-		try {
-			mailService.sendPasswordEmail(user, password);
-
-			this.setNewPassword(user, password);
-
-			return new ResponseEntity<>("A temporary password was sent to your email address", HttpStatus.OK);
-
-		} catch (MailAuthenticationException e) {
-			return new ResponseEntity<>("The email service is not in use now", HttpStatus.NOT_IMPLEMENTED);
-		}
 	}
 
 	private User findUserByEmailOrUsername(String emailOrUsername) {
@@ -144,47 +87,20 @@ public class UserService {
 		return user;
 	}
 
-	private void verifyUserAndCreateCurrentBacket(User user) {
-		this.verifyUser(user);
-		this.addCurrentBacketByUserId(user);
-	}
-
-	private void verifyUser(User user) {
-		user.setAccountVerified(true);
-		user.setVerificationCode(null);
-		userRepository.save(user);
-	}
-
-	private void addCurrentBacketByUserId(User user) {
-		Long userId = user.getId();
-
-		List<Backet> currentBackets = backetRepository.findCurrentByUserid(userId);
-
-		if (currentBackets.size() > 0)
-			throw new ResponseStatusException(HttpStatus.PARTIAL_CONTENT,
-					"User shouldn't have had a backet before verification");
-
-		Backet newCurrentBacketForUser = new Backet(true, user);
-
-		backetRepository.save(newCurrentBacketForUser);
-	}
-
 	private User authenticateUser(String username, String password) {
+		String authenticatedUsername = this.getAuthenticatedUsername(username, password);
+
+		User authenticatedUser = commonService.findUserByUsername(authenticatedUsername);
+		return authenticatedUser;
+	}
+
+	private String getAuthenticatedUsername(String username, String password) {
 		UsernamePasswordAuthenticationToken authenticationCredentials = new UsernamePasswordAuthenticationToken(
 				username, password);
-
 		Authentication authenticationInstance = authenticationManager.authenticate(authenticationCredentials);
 
 		String authenticatedUsername = authenticationInstance.getName();
-
-		Optional<User> optionalAuthenticatedUser = userRepository.findByUsername(authenticatedUsername);
-
-		if (!optionalAuthenticatedUser.isPresent())
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong password");
-
-		User authenticatedUser = optionalAuthenticatedUser.get();
-
-		return authenticatedUser;
+		return authenticatedUsername;
 	}
 
 	private ResponseEntity<?> returnAuthenticationInfo(User authenticatedUser) {
@@ -197,6 +113,30 @@ public class UserService {
 		return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + jwts).header(HttpHeaders.ALLOW, role)
 				.header(HttpHeaders.HOST, id)
 				.header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Authorization, Allow", "Host").build();
+	}
+
+	// Method to get signle user info:
+	public User getUserById(Long userId, Authentication authentication) {
+		User user = commonService.checkAuthenticationAndAuthorize(authentication, userId);
+		return user;
+	}
+
+	// Signup method
+	public ResponseEntity<?> signUp(SignupCredentials credentials)
+			throws MessagingException, UnsupportedEncodingException {
+		String username = credentials.getUsername();
+		String email = credentials.getEmail();
+		this.checkUsernameOrEmailInUse(username, email);
+
+		User newUser = this.createUnverifiedUserBySignupCredentials(credentials);
+
+		try {
+			mailService.sendVerificationEmail(newUser);
+			return new ResponseEntity<>("We sent verification link to your email address :)", HttpStatus.OK);
+		} catch (MailAuthenticationException e) {
+			this.verifyUser(newUser);
+			return new ResponseEntity<>("Registration went well, you can login now", HttpStatus.ACCEPTED);
+		}
 	}
 
 	private void checkUsernameOrEmailInUse(String username, String email) {
@@ -228,6 +168,18 @@ public class UserService {
 		return newUser;
 	}
 
+	// Verification method
+	public ResponseEntity<?> verifyUser(TokenInfo tokenInfo) {
+		String token = tokenInfo.getToken();
+		User user = this.findUserByVerificationCode(token);
+
+		if (user.isAccountVerified())
+			return new ResponseEntity<>("User is already verified", HttpStatus.CONFLICT);
+
+		this.verifyUserAndCreateCurrentBacket(user);
+		return new ResponseEntity<>("Verification went well", HttpStatus.OK);
+	}
+
 	private User findUserByVerificationCode(String verificationCode) {
 		Optional<User> optionalUser = userRepository.findByVerificationCode(verificationCode);
 
@@ -239,15 +191,42 @@ public class UserService {
 		return user;
 	}
 
+	private void verifyUserAndCreateCurrentBacket(User user) {
+		this.verifyUser(user);
+		commonService.addCurrentBacketForUser(user);
+	}
+
+	private void verifyUser(User user) {
+		user.setAccountVerified(true);
+		user.setVerificationCode(null);
+		userRepository.save(user);
+	}
+
+	// Reset password by email method:
+	public ResponseEntity<?> resetPassword(EmailInfo emailInfo)
+			throws MessagingException, UnsupportedEncodingException {
+		String email = emailInfo.getEmail();
+		User user = this.findUserByEmail(email);
+		this.handleAccountUnverifiedCase(user);
+
+		String password = RandomStringUtils.random(15);
+
+		try {
+			mailService.sendPasswordEmail(user, password);
+			this.setNewPassword(user, password);
+			return new ResponseEntity<>("A temporary password was sent to your email address", HttpStatus.OK);
+		} catch (MailAuthenticationException e) {
+			return new ResponseEntity<>("The email service is not in use now", HttpStatus.NOT_IMPLEMENTED);
+		}
+	}
+
 	private User findUserByEmail(String email) {
 		Optional<User> optionalUser = userRepository.findByEmail(email);
-
 		if (!optionalUser.isPresent())
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND,
 					"User with this email (" + email + ") doesn't exist");
 
 		User user = optionalUser.get();
-
 		return user;
 	}
 
@@ -257,7 +236,43 @@ public class UserService {
 		userRepository.save(user);
 	}
 
-	private void handleAccountUnverified(User user) {
+	// Method to update the user's own info:
+	public ResponseEntity<?> updateUser(Long userId, User user, Authentication authentication) {
+		User userToUpdate = commonService.checkAuthenticationAndAuthorize(authentication, userId);
+
+		commonService.checkAuthorization(user, userId);
+
+		this.updateUser(userToUpdate, user);
+		return new ResponseEntity<>("User info was updated successfully", HttpStatus.OK);
+	}
+
+	private void updateUser(User userToUpdate, User updatedUser) {
+		userToUpdate.setLastname(updatedUser.getLastname());
+		userToUpdate.setFirstname(updatedUser.getFirstname());
+		userToUpdate.setCountry(updatedUser.getCountry());
+		userToUpdate.setCity(updatedUser.getCity());
+		userToUpdate.setStreet(updatedUser.getStreet());
+		userToUpdate.setPostcode(updatedUser.getPostcode());
+		userRepository.save(userToUpdate);
+	}
+
+	// The method to change user's own password:
+	public ResponseEntity<?> changePassword(PasswordInfo passwordInfo, Authentication authentication) {
+		Long userId = passwordInfo.getUserId();
+		String oldPassword = passwordInfo.getOldPassword();
+		String newPassword = passwordInfo.getNewPassword();
+
+		User user = commonService.checkAuthenticationAndAuthorize(authentication, userId);
+		commonService.checkPassword(oldPassword, user.getPassword());
+
+		this.setNewPassword(user, newPassword);
+		return new ResponseEntity<>("The password was changed", HttpStatus.OK);
+	}
+
+	// Handling user is not verified case: if smtp service is working (then
+	// springMailUsername shouldn't equal to 'default_value') then the exception is
+	// thrown. Otherwise user is verified automatically
+	private void handleAccountUnverifiedCase(User user) {
 		if (!user.isAccountVerified()) {
 			if (!this.springMailUsername.equals("default_value"))
 				throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is not verified");

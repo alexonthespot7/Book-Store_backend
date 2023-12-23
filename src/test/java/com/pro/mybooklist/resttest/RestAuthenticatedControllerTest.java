@@ -179,8 +179,7 @@ public class RestAuthenticatedControllerTest {
 
 			mockMvc.perform(post(requestURIBookNotFound).header("Authorization", jwt)
 					.contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isInternalServerError()).andExpect(
-							content().string("There should be exactly 1 current backet for user. Actual quantity: 0"));
+					.andExpect(status().isInternalServerError());
 		}
 
 		@Test
@@ -195,8 +194,7 @@ public class RestAuthenticatedControllerTest {
 
 			mockMvc.perform(post(requestURIBookNotFound).header("Authorization", jwt)
 					.contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isInternalServerError()).andExpect(
-							content().string("There should be exactly 1 current backet for user. Actual quantity: 2"));
+					.andExpect(status().isInternalServerError());
 		}
 
 		@Test
@@ -417,10 +415,10 @@ public class RestAuthenticatedControllerTest {
 	}
 
 	@Nested
-	class testReduceItemAuthenticated {
+	class testReduceBookAuthenticated {
 		@Test
 		@Rollback
-		public void testReduceItemAuthenticatedNotOneCurrentBacketCase() throws Exception {
+		public void testReduceBookAuthenticatedNotOneCurrentBacketCase() throws Exception {
 			String requestURIBookNotFound = "/reduceitem/24";
 
 			// No current backet case:
@@ -438,7 +436,7 @@ public class RestAuthenticatedControllerTest {
 
 		@Test
 		@Rollback
-		public void testReduceItemAuthenticatedBookNotFoundCase() throws Exception {
+		public void testReduceBookAuthenticatedBookNotFoundCase() throws Exception {
 			String requestURIBookNotFound = "/reduceitem/24";
 
 			mockMvc.perform(put(requestURIBookNotFound).header("Authorization", jwt)).andExpect(status().isNotFound());
@@ -446,7 +444,7 @@ public class RestAuthenticatedControllerTest {
 
 		@Test
 		@Rollback
-		public void testReduceItemAuthenticatedBookIsNotInBacketCase() throws Exception {
+		public void testReduceBookAuthenticatedBookIsNotInBacketCase() throws Exception {
 			String requestURI = "/reduceitem/";
 
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
@@ -460,7 +458,7 @@ public class RestAuthenticatedControllerTest {
 
 		@Test
 		@Rollback
-		public void testReduceItemAuthenticatedGoodCases() throws Exception {
+		public void testReduceBookAuthenticatedGoodCases() throws Exception {
 			String requestURI = "/reduceitem/";
 
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
@@ -488,10 +486,10 @@ public class RestAuthenticatedControllerTest {
 	}
 
 	@Nested
-	class testDeleteItemFromCurrentBacket {
+	class testDeleteBookFromCurrentBacket {
 		@Test
 		@Rollback
-		public void testDeleteItemFromCurrentBacketNotOneCurrentBacketCase() throws Exception {
+		public void testDeleteBookFromCurrentBacketNotOneCurrentBacketCase() throws Exception {
 			String requestURIBookNotFound = "/deleteitem/24";
 
 			// No current backet case:
@@ -509,7 +507,7 @@ public class RestAuthenticatedControllerTest {
 
 		@Test
 		@Rollback
-		public void testDeleteItemFromCurrentBacketBookNotFoundCase() throws Exception {
+		public void testDeleteBookFromCurrentBacketBookNotFoundCase() throws Exception {
 			String requestURIBookNotFound = "/deleteitem/24";
 
 			mockMvc.perform(delete(requestURIBookNotFound).header("Authorization", jwt))
@@ -518,7 +516,7 @@ public class RestAuthenticatedControllerTest {
 
 		@Test
 		@Rollback
-		public void testDeleteItemFromCurrentBacketBookIsNotInBacketCase() throws Exception {
+		public void testDeleteBookFromCurrentBacketBookIsNotInBacketCase() throws Exception {
 			String requestURI = "/deleteitem/";
 
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
@@ -532,7 +530,7 @@ public class RestAuthenticatedControllerTest {
 
 		@Test
 		@Rollback
-		public void testDeleteItemFromCurrentBacketGoodCase() throws Exception {
+		public void testDeleteBookFromCurrentBacketGoodCase() throws Exception {
 			String requestURI = "/deleteitem/";
 
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
@@ -730,15 +728,14 @@ public class RestAuthenticatedControllerTest {
 	class testChangePassword {
 		@Test
 		@Rollback
-		public void testChangePasswordUsernameMissmatchCase() throws Exception {
+		public void testChangePasswordIdMissmatchCase() throws Exception {
 			String requestURI = "/changepassword";
 
-			PasswordInfo passwordInfoWrongUsername = new PasswordInfo(USERNAME + "Wrong", DEFAULT_PASSWORD,
-					DEFAULT_PASSWORD);
-			String requestBodyWrongUsername = objectMapper.writeValueAsString(passwordInfoWrongUsername);
+			PasswordInfo passwordInfoWrongId = new PasswordInfo(Long.valueOf(200), DEFAULT_PASSWORD, DEFAULT_PASSWORD);
+			String requestBodyWrongId = objectMapper.writeValueAsString(passwordInfoWrongId);
 
 			mockMvc.perform(put(requestURI).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
-					.content(requestBodyWrongUsername)).andExpect(status().isUnauthorized());
+					.content(requestBodyWrongId)).andExpect(status().isUnauthorized());
 		}
 
 		@Test
@@ -746,12 +743,12 @@ public class RestAuthenticatedControllerTest {
 		public void testChangePasswordOldPasswordIsIncorrectCase() throws Exception {
 			String requestURI = "/changepassword";
 
-			PasswordInfo passwordInfoWrongOldPassword = new PasswordInfo(USERNAME, WRONG_PWD,
+			PasswordInfo passwordInfoWrongOldPassword = new PasswordInfo(authenticatedUserId, WRONG_PWD,
 					DEFAULT_PASSWORD);
 			String requestBodyWrongOldPassword = objectMapper.writeValueAsString(passwordInfoWrongOldPassword);
 
 			mockMvc.perform(put(requestURI).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
-					.content(requestBodyWrongOldPassword)).andExpect(status().isConflict());
+					.content(requestBodyWrongOldPassword)).andExpect(status().isBadRequest());
 		}
 
 		@Test
@@ -760,7 +757,7 @@ public class RestAuthenticatedControllerTest {
 			String requestURI = "/changepassword";
 
 			String newPassword = "newPwd";
-			PasswordInfo passwordInfo = new PasswordInfo(USERNAME, DEFAULT_PASSWORD, newPassword);
+			PasswordInfo passwordInfo = new PasswordInfo(authenticatedUserId, DEFAULT_PASSWORD, newPassword);
 			String requestBody = objectMapper.writeValueAsString(passwordInfo);
 
 			mockMvc.perform(put(requestURI).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)

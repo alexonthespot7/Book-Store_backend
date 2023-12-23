@@ -5,7 +5,7 @@ import java.util.Date;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -13,7 +13,7 @@ import io.jsonwebtoken.security.Keys;
 
 import java.security.Key;
 
-@Component
+@Service
 public class AuthenticationService {
 	static final long EXPIRATION_TIME = 864_000_00;
 	static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);

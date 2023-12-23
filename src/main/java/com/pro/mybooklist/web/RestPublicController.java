@@ -171,10 +171,10 @@ public class RestPublicController {
 
 	@PutMapping("/reduceitemnoauth/{bookid}")
 	@Transactional
-	public ResponseEntity<?> reduceItemNoAuthentication(@PathVariable("bookid") Long bookId,
+	public ResponseEntity<?> reduceBookNoAuthentication(@PathVariable("bookid") Long bookId,
 			@RequestBody BacketInfo backetInfo) {
 
-		return backetService.reduceItemNoAuthentication(bookId, backetInfo);
+		return backetService.reduceBookNoAuthentication(bookId, backetInfo);
 
 	}
 

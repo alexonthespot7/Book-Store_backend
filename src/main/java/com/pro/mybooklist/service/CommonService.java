@@ -1,5 +1,6 @@
 package com.pro.mybooklist.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -7,16 +8,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.model.Backet;
 import com.pro.mybooklist.model.BacketRepository;
 import com.pro.mybooklist.model.Order;
 import com.pro.mybooklist.model.OrderRepository;
 import com.pro.mybooklist.model.User;
+import com.pro.mybooklist.model.UserRepository;
 
 @Service
 public class CommonService {
@@ -27,6 +31,9 @@ public class CommonService {
 	private BacketRepository backetRepository;
 
 	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired
 	private ObjectMapper objectMapper;
 
 	private static final Logger log = LoggerFactory.getLogger(CommonService.class);
@@ -34,9 +41,7 @@ public class CommonService {
 	// Method to find the backet and check if it's private:
 	public Backet findBacketAndCheckIsPrivate(Long backetId) {
 		Backet backet = this.findBacket(backetId);
-
 		this.checkIfBacketIsPrivate(backet);
-
 		return backet;
 	}
 
@@ -45,46 +50,44 @@ public class CommonService {
 	public Backet findBacketAndCheckIsPrivateAndCheckPassword(Long backetId, String password) {
 		Backet backet = this.findBacketAndCheckIsPrivate(backetId);
 		this.checkPassword(password, backet.getPasswordHash());
-
 		return backet;
 	}
 
-	// Method to find backet, check
+	// Method to find backet, check if it's private, it's password and check if it's
+	// current
 	public Backet findBacketAndCheckIsPrivateAndCheckPasswordAndCheckIsCurrent(Long backetId, String password) {
 		Backet backet = this.findBacketAndCheckIsPrivateAndCheckPassword(backetId, password);
-
 		this.checkIfBacketIsCurrent(backet);
-
 		return backet;
 	}
 
-	// Method to encode password:
-	public String encodePassword(String password) {
-		BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
-		String hashPwd = bc.encode(password);
+	// The method to find out if the user has exactly one current backet:
+	public Backet findCurrentBacketOfUser(Long userId) {
+		List<Backet> currentBacketsOfUser = backetRepository.findCurrentByUserid(userId);
 
-		return hashPwd;
+		if (currentBacketsOfUser.size() != 1)
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					"There should be exactly 1 current backet for user. Actual quantity: "
+							+ currentBacketsOfUser.size());
+
+		Backet currentBacket = currentBacketsOfUser.get(0);
+		return currentBacket;
 	}
 
-	// Method to check if the order is in the db by orderId:
-	public Order findOrder(Long orderId) {
-		Optional<Order> optionalOrder = orderRepository.findById(orderId);
-
-		if (!optionalOrder.isPresent())
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The order wasn't found by id");
-
-		Order order = optionalOrder.get();
-
-		return order;
+	// Method to add new current Backet for the user
+	public void addCurrentBacketForUser(User user) {
+		Long userId = user.getId();
+		this.checkCurrentBacketsOfUser(userId);
+		Backet newCurrentBacketForUser = new Backet(true, user);
+		backetRepository.save(newCurrentBacketForUser);
 	}
 
-	// Method to find order and check its password
-	public Order findOrderAndCheckPassword(Long orderId, String password) {
-		Order order = this.findOrder(orderId);
+	private void checkCurrentBacketsOfUser(Long userId) {
+		List<Backet> currentBackets = backetRepository.findCurrentByUserid(userId);
 
-		this.checkPassword(password, order.getPassword());
-
-		return order;
+		if (currentBackets.size() > 0)
+			throw new ResponseStatusException(HttpStatus.PARTIAL_CONTENT,
+					"User shouldn't have had a backet before verification");
 	}
 
 	private Backet findBacket(Long backetId) {
@@ -94,7 +97,6 @@ public class CommonService {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The backet wasn't found by id");
 
 		Backet backet = optionalBacket.get();
-
 		return backet;
 	}
 
@@ -110,9 +112,82 @@ public class CommonService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "You can't change not current backet");
 	}
 
-	private void checkPassword(String password, String passwordHash) {
+	// Method to encode password:
+	public String encodePassword(String password) {
+		BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
+		String hashPwd = bc.encode(password);
+
+		return hashPwd;
+	}
+
+	// Method to compare password and hashedPassword with BCryp encoder
+	public void checkPassword(String password, String passwordHash) {
 		BCryptPasswordEncoder bc = new BCryptPasswordEncoder();
 		if (!bc.matches(password, passwordHash))
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is wrong");
+	}
+
+	// Method to check if the order is in the db by orderId:
+	public Order findOrder(Long orderId) {
+		Optional<Order> optionalOrder = orderRepository.findById(orderId);
+		if (!optionalOrder.isPresent())
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The order wasn't found by id");
+
+		Order order = optionalOrder.get();
+		return order;
+	}
+
+	// Method to find order and check its password
+	public Order findOrderAndCheckPassword(Long orderId, String password) {
+		Order order = this.findOrder(orderId);
+		this.checkPassword(password, order.getPassword());
+
+		return order;
+	}
+
+	// Method to check provided authentication and find user by auth
+	public User checkAuthentication(Authentication authentication) {
+		String username = this.getAuthenticatedUsername(authentication);
+		User user = this.findUserByUsername(username);
+
+		return user;
+	}
+
+	// Method to check authentication and then check if the authenticated user is
+	// the target user by comparing IDs
+	public User checkAuthenticationAndAuthorize(Authentication authentication, Long userId) {
+		User user = this.checkAuthentication(authentication);
+		this.checkAuthorization(user, userId);
+		return user;
+	}
+
+	// Method to check if the user has rights by user instance and userId by
+	// comparing IDs:
+	public void checkAuthorization(User user, Long userId) {
+		if (user.getId() != userId)
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+					"You are not allowed to get someone else's info");
+	}
+
+	private String getAuthenticatedUsername(Authentication authentication) {
+		if (!(authentication.getPrincipal() instanceof MyUser))
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not authorized");
+
+		MyUser myUser = (MyUser) authentication.getPrincipal();
+		String username = myUser.getUsername();
+
+		return username;
+	}
+
+	// The method to find the user by username:
+	public User findUserByUsername(String username) {
+		Optional<User> optionalUser = userRepository.findByUsername(username);
+
+		if (!optionalUser.isPresent())
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User with this username doesn't exist");
+
+		User user = optionalUser.get();
+
+		return user;
 	}
 }

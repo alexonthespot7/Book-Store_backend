@@ -21,6 +21,9 @@ public class MailService {
 	@Value("${spring.mail.username}")
 	private String springMailUsername;
 	
+	@Value("${front.end.url}")
+	private String frontEndUrl;
+	
 	public void sendOrderInfoEmail(String username, String emailTo, Long orderId, String password)
 			throws MessagingException, UnsupportedEncodingException {
 		String toAddress = emailTo;
@@ -53,7 +56,7 @@ public class MailService {
 	
 	public void sendVerificationEmail(User user) throws MessagingException, UnsupportedEncodingException {
 		String toAddress = user.getEmail();
-		String fromAddress = "aleksei.application.noreply@gmail.com";
+		String fromAddress = springMailUsername;
 		String senderName = "No reply";
 		String subject = "Bookstore verification link";
 		String content = "Dear [[name]],<br><br>"
@@ -70,7 +73,7 @@ public class MailService {
 		helper.setSubject(subject);
 
 		content = content.replace("[[name]]", user.getUsername());
-		String mainURL = "https://bookstore-axos.netlify.app" + endpoint + user.getVerificationCode();
+		String mainURL = frontEndUrl + endpoint + user.getVerificationCode();
 
 		content = content.replace("[[URL]]", mainURL);
 
@@ -81,7 +84,7 @@ public class MailService {
 	
 	public void sendPasswordEmail(User user, String password) throws MessagingException, UnsupportedEncodingException {
 		String toAddress = user.getEmail();
-		String fromAddress = "aleksei.application.noreply@gmail.com";
+		String fromAddress = springMailUsername;
 		String senderName = "No reply";
 		String subject = "Reset password";
 		String content = "Dear [[name]],<br><br>" + "Here is your new password for your bookstore account:<br><br>"
