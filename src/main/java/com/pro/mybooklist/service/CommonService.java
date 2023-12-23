@@ -3,9 +3,6 @@ package com.pro.mybooklist.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -13,7 +10,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.model.Backet;
 import com.pro.mybooklist.model.BacketRepository;
@@ -32,11 +28,6 @@ public class CommonService {
 
 	@Autowired
 	private UserRepository userRepository;
-
-	@Autowired
-	private ObjectMapper objectMapper;
-
-	private static final Logger log = LoggerFactory.getLogger(CommonService.class);
 
 	// Method to find the backet and check if it's private:
 	public Backet findBacketAndCheckIsPrivate(Long backetId) {

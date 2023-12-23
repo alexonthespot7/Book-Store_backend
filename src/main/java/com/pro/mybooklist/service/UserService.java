@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -16,21 +14,15 @@ import org.springframework.mail.MailAuthenticationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.httpforms.AccountCredentials;
 import com.pro.mybooklist.httpforms.EmailInfo;
 import com.pro.mybooklist.httpforms.PasswordInfo;
+import com.pro.mybooklist.httpforms.RoleInfo;
 import com.pro.mybooklist.httpforms.SignupCredentials;
 import com.pro.mybooklist.httpforms.TokenInfo;
-import com.pro.mybooklist.model.Backet;
-import com.pro.mybooklist.model.BacketRepository;
 import com.pro.mybooklist.model.User;
 import com.pro.mybooklist.model.UserRepository;
 
@@ -40,9 +32,6 @@ import jakarta.mail.MessagingException;
 public class UserService {
 	@Autowired
 	private UserRepository userRepository;
-
-	@Autowired
-	private BacketRepository backetRepository;
 
 	@Autowired
 	private CommonService commonService;
@@ -58,8 +47,6 @@ public class UserService {
 
 	@Value("${spring.mail.username}")
 	private String springMailUsername;
-
-	private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
 	// Login method
 	public ResponseEntity<?> getToken(AccountCredentials credentials) {
@@ -113,6 +100,12 @@ public class UserService {
 		return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + jwts).header(HttpHeaders.ALLOW, role)
 				.header(HttpHeaders.HOST, id)
 				.header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Authorization, Allow", "Host").build();
+	}
+
+	// Method to get the list of all users:
+	public List<User> getUsers() {
+		List<User> users = (List<User>) userRepository.findAll();
+		return users;
 	}
 
 	// Method to get signle user info:
@@ -267,6 +260,35 @@ public class UserService {
 
 		this.setNewPassword(user, newPassword);
 		return new ResponseEntity<>("The password was changed", HttpStatus.OK);
+	}
+
+	// Method to change user's role:
+	public ResponseEntity<?> changeUserRole(Long userId, RoleInfo roleInfo, Authentication authentication) {
+		User admin = commonService.checkAuthentication(authentication);
+		Long adminId = admin.getId();
+		User userToChange = this.findUserByUserId(userId);
+
+		if (adminId == userId)
+			return new ResponseEntity<>("You can't change your own role", HttpStatus.NOT_ACCEPTABLE);
+
+		this.setRole(roleInfo, userToChange);
+		return new ResponseEntity<>("Role of the user was successfully changed", HttpStatus.OK);
+	}
+
+	private User findUserByUserId(Long userId) {
+		Optional<User> optionalUser = userRepository.findById(userId);
+
+		if (!optionalUser.isPresent())
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User wasn't found by id");
+
+		User user = optionalUser.get();
+		return user;
+	}
+
+	private void setRole(RoleInfo roleInfo, User user) {
+		String role = roleInfo.getRole();
+		user.setRole(role);
+		userRepository.save(user);
 	}
 
 	// Handling user is not verified case: if smtp service is working (then

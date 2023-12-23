@@ -17,13 +17,13 @@ import jakarta.mail.internet.MimeMessage;
 public class MailService {
 	@Autowired
 	private JavaMailSender mailSender;
-	
+
 	@Value("${spring.mail.username}")
 	private String springMailUsername;
-	
+
 	@Value("${front.end.url}")
 	private String frontEndUrl;
-	
+
 	public void sendOrderInfoEmail(String username, String emailTo, Long orderId, String password)
 			throws MessagingException, UnsupportedEncodingException {
 		String toAddress = emailTo;
@@ -53,7 +53,7 @@ public class MailService {
 
 		mailSender.send(message);
 	}
-	
+
 	public void sendVerificationEmail(User user) throws MessagingException, UnsupportedEncodingException {
 		String toAddress = user.getEmail();
 		String fromAddress = springMailUsername;
@@ -81,7 +81,7 @@ public class MailService {
 
 		mailSender.send(message);
 	}
-	
+
 	public void sendPasswordEmail(User user, String password) throws MessagingException, UnsupportedEncodingException {
 		String toAddress = user.getEmail();
 		String fromAddress = springMailUsername;
@@ -100,6 +100,64 @@ public class MailService {
 		content = content.replace("[[name]]", user.getUsername());
 
 		content = content.replace("[[PASSWORD]]", password);
+
+		helper.setText(content, true);
+
+		mailSender.send(message);
+	}
+
+	public void sendOrderEmailChanged(String firstname, String emailTo, Long orderId)
+			throws MessagingException, UnsupportedEncodingException {
+		String toAddress = emailTo;
+		String fromAddress = springMailUsername;
+		String senderName = "No reply";
+		String subject = "Your order email changed";
+		String content = "Dear [[name]],<br><br>"
+				+ "Your order email address was changed!<br>From now on you will be receiving all information via this email address<br> Using the following order number you can get your order information on the website:<br>"
+				+ "<h4>ORDER NUMBER: [[ORDERID]]</h4>"
+				+ "If you have any questions or you want to change inforamtion please contact us through the email spotted on the website footer<br><br>"
+				+ "Thank you for choosing us,<br>" + "AXOS inc.";
+
+		MimeMessage message = mailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message);
+
+		helper.setFrom(fromAddress, senderName);
+		helper.setTo(toAddress);
+		helper.setSubject(subject);
+
+		content = content.replace("[[name]]", firstname);
+
+		content = content.replace("[[ORDERID]]", orderId.toString());
+
+		helper.setText(content, true);
+
+		mailSender.send(message);
+	}
+
+	public void sendStatusChangeEmail(String firstname, String emailTo, Long orderId, String status)
+			throws MessagingException, UnsupportedEncodingException {
+		String toAddress = emailTo;
+		String fromAddress = springMailUsername;
+		String senderName = "No reply";
+		String subject = "Your order status has changed";
+		String content = "Dear [[name]],<br><br>"
+				+ "Your order status has changed!<br>Your current order status is now: <h5>[[status]]</h5><br> Using the following order number you can get your order information on the website:<br>"
+				+ "<h4>ORDER NUMBER: [[ORDERID]]</h4>"
+				+ "If you have any questions or you want to change inforamtion please contact us through the email spotted on the website footer<br><br>"
+				+ "Thank you for choosing us,<br>" + "AXOS inc.";
+
+		MimeMessage message = mailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message);
+
+		helper.setFrom(fromAddress, senderName);
+		helper.setTo(toAddress);
+		helper.setSubject(subject);
+
+		content = content.replace("[[name]]", firstname);
+
+		content = content.replace("[[status]]", status);
+
+		content = content.replace("[[ORDERID]]", orderId.toString());
 
 		helper.setText(content, true);
 

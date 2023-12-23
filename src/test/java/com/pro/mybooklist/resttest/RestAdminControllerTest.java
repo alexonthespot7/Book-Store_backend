@@ -193,7 +193,7 @@ public class RestAdminControllerTest {
 			String requestURIGood = requestURI + orderId;
 
 			OrderInfo orderInfo = new OrderInfo("In progress", FIRSTNAME, LASTNAME, COUNTRY, CITY + "Update", STREET,
-					POSTCODE, EMAIL);
+					POSTCODE, "New_mail");
 			String requestBody = objectMapper.writeValueAsString(orderInfo);
 
 			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
@@ -204,6 +204,7 @@ public class RestAdminControllerTest {
 			Order updatedOrder = orders.get(0);
 			assertThat(updatedOrder.getCity()).isEqualTo(CITY + "Update");
 			assertThat(updatedOrder.getStatus()).isEqualTo("In progress");
+			assertThat(updatedOrder.getEmail()).isEqualTo("New_mail");
 		}
 	}
 

@@ -4,25 +4,14 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.server.ResponseStatusException;
 
-import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.httpforms.BacketInfo;
-import com.pro.mybooklist.model.Backet;
-import com.pro.mybooklist.model.BacketRepository;
 import com.pro.mybooklist.model.Book;
 import com.pro.mybooklist.model.BookRepository;
 import com.pro.mybooklist.model.Category;
-import com.pro.mybooklist.model.Order;
-import com.pro.mybooklist.model.OrderRepository;
 import com.pro.mybooklist.model.User;
-import com.pro.mybooklist.model.UserRepository;
 import com.pro.mybooklist.sqlforms.BookInCurrentCart;
 import com.pro.mybooklist.sqlforms.RawBookInfo;
 
@@ -30,15 +19,6 @@ import com.pro.mybooklist.sqlforms.RawBookInfo;
 public class BookService {
 	@Autowired
 	private BookRepository bookRepository;
-
-	@Autowired
-	private BacketRepository backetRepository;
-
-	@Autowired
-	private OrderRepository orderRepository;
-
-	@Autowired
-	private UserRepository userRepository;
 
 	@Autowired
 	private CommonService commonService;

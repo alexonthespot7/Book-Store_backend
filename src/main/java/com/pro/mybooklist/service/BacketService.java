@@ -1,24 +1,15 @@
 package com.pro.mybooklist.service;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.logging.Log;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.httpforms.BacketInfo;
 import com.pro.mybooklist.httpforms.BookQuantityInfo;
 import com.pro.mybooklist.httpforms.QuantityInfo;
@@ -30,7 +21,6 @@ import com.pro.mybooklist.model.BacketRepository;
 import com.pro.mybooklist.model.Book;
 import com.pro.mybooklist.model.BookRepository;
 import com.pro.mybooklist.model.User;
-import com.pro.mybooklist.model.UserRepository;
 import com.pro.mybooklist.sqlforms.QuantityOfBacket;
 import com.pro.mybooklist.sqlforms.TotalOfBacket;
 
@@ -46,12 +36,7 @@ public class BacketService {
 	private BookRepository bookRepository;
 
 	@Autowired
-	private UserRepository userRepository;
-
-	@Autowired
 	private CommonService commonService;
-
-	private static final Logger log = LoggerFactory.getLogger(BacketService.class);
 
 	// Method to get the total price of the backet by backetId and backet password:
 	public TotalOfBacket getTotalByBacketId(BacketInfo backetInfo) {
@@ -178,14 +163,14 @@ public class BacketService {
 	private ResponseEntity<?> reduceQuantityOfBookInBacket(Backet backet, Long bookId) {
 		Long backetId = backet.getBacketid();
 		this.findBook(bookId);
-		
+
 		BacketBook backetBook = this.findBacketBook(bookId, backetId);
 		int quantity = backetBook.getQuantity();
 		quantity = quantity - 1;
 
 		return this.reduceQuantityOfBookInBacket(quantity, backetBook);
 	}
-	
+
 	private ResponseEntity<?> reduceQuantityOfBookInBacket(int quantity, BacketBook backetBook) {
 		if (quantity > 0) {
 			this.setBookQuantityInCart(quantity, backetBook);
@@ -254,7 +239,7 @@ public class BacketService {
 	// Method to find optional backet book by backetId and bookId:
 	private Optional<BacketBook> getOptionalBacketBook(Long backetId, Long bookId) {
 		BacketBookKey backetBookKey = new BacketBookKey(backetId, bookId);
-		
+
 		Optional<BacketBook> optionalBacketBook = backetBookRepository.findById(backetBookKey);
 		return optionalBacketBook;
 	}
