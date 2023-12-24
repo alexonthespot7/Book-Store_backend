@@ -348,7 +348,7 @@ public class RestAdminControllerTest {
 
 		AccountCredentials creds = new AccountCredentials(ADMIN_USERNAME, DEFAULT_PASSWORD);
 		String requestBody = objectMapper.writeValueAsString(creds);
-		MvcResult result = mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+		MvcResult result = mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 				.andExpect(status().isOk()).andReturn();
 
 		jwt = result.getResponse().getHeader("Authorization");

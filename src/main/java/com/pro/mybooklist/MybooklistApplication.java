@@ -70,7 +70,7 @@ public class MybooklistApplication {
 			Book book3 = new Book("It", "Steven King", "123GPA223", 1986, 12.5,
 					horror, "https://firebasestorage.googleapis.com/v0/b/mytest-585af.appspot.com/o/covers%2Fit.webp2320d8f8-7a30-4a76-9118-006c4a2e2463?alt=media&token=23901e7e-7b89-4803-82b5-ad9f47c6bb4d");
 			Book book4 = new Book("Fight Club", "Chuck Palahniuk", "123GPA323", 1996, 10.5,
-					thriller, "https://firebasestorage.googleapis.com/v0/b/mytest-585af.appspot.com/o/covers%2Ffightcl.webp?alt=media&token=0226506b-da58-46ea-a421-40c06cd717ea");
+					thriller, "https://firebasestorage.googleapis.com/v0/b/mytest-585af.appspot.com/o/covers%2F36236124.jpgdc780c5b-ccb2-46e8-8d7d-d7101bc05bf9?alt=media&token=e94d48ef-ac19-486f-a099-03c5744ffda4");
 			Book book5 = new Book("Tender is the Night", "Scott Fitzgerald", "123GPA423", 1934, 12.5,
 					romance, "https://firebasestorage.googleapis.com/v0/b/mytest-585af.appspot.com/o/covers%2Ftendernight.webp?alt=media&token=54cba93b-7130-45b5-a8f5-78584deb67d0");
 			Book book6 = new Book("Harry Potter and the Chamber of Secrets", "Joanne Rowling", "123GPA523", 1998, 8.5,
@@ -162,13 +162,19 @@ public class MybooklistApplication {
 			urepository.save(newAdmin);
 			urepository.save(newUser2);
 			
-			Backet backet1User1 = new Backet(true, newUser1);
-			Backet backet1Admin = new Backet(true, newAdmin);
+			Backet currentBacketUser1 = new Backet(true, newUser1);
+			Backet currentBacketUser2 = new Backet(true, newUser2);
+			Backet currentBacketAdmin = new Backet(true, newAdmin);
+			barepository.save(currentBacketUser1);
+			barepository.save(currentBacketUser2);
+			barepository.save(currentBacketAdmin);
+
+			Backet backet1User1 = new Backet(false, newUser1);
+			Backet backet1Admin = new Backet(false, newAdmin);
 			Backet backet2Admin = new Backet(false, newAdmin);
 			
 			barepository.save(backet1User1);
 			barepository.save(backet1Admin);
-			
 			barepository.save(backet2Admin);
 			
 			

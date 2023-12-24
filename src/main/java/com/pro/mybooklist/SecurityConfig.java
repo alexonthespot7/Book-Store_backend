@@ -46,8 +46,8 @@ public class SecurityConfig {
 				.authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
 						.requestMatchers(SWAGGER_PATHS).permitAll()
 						.requestMatchers("/error/**").permitAll()
-						.requestMatchers(HttpMethod.GET, "/login", "/books/*", "/books", "/booksbycategory", "/orderbypassword", "/showcart", "/totalofbacket", "/categories", "/topsales", "/booksinorder/*", "/getordertotal/*", "/orders/*", "/booksids/*", "/checkordernumber", "/api/books", "/api/categories").permitAll()
-						.requestMatchers(HttpMethod.POST, "/signup", "/addbook/*", "/createbacket", "/makesale", "/sendmail").permitAll()
+						.requestMatchers(HttpMethod.GET, "/books/*", "/books", "/categories", "/topsales", "/booksinorder/*", "/getordertotal/*", "/orders/*", "/booksids/*", "/api/books", "/api/categories").permitAll()
+						.requestMatchers(HttpMethod.POST, "/login", "/signup", "/booksbycategory", "/addbook/*", "/createbacket", "/makesale", "/orderbypassword", "/showcart", "/totalofbacket", "/checkordernumber").permitAll()
 						.requestMatchers(HttpMethod.PUT, "/reduceitemnoauth/*", "/verify", "/resetpassword").permitAll()
 						.requestMatchers(HttpMethod.DELETE, "/deletebook/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/users/*", "/showcart/*", "/booksids", "/getcurrenttotal", "/currentbacketquantity", "/users/*/orders").authenticated()

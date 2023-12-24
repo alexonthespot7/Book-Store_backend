@@ -173,19 +173,19 @@ public class RestPublicControllerTest {
 		String requestURI = "/booksbycategory";
 		// Category not found case:
 		String requestBodyCategoryNotFound = "{\"categoryid\":1,\"name\":\"Other\"}";
-		mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyCategoryNotFound))
+		mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyCategoryNotFound))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.size()").value(0));
 
 		// No books in the category case;
 		Category otherCategory = this.createCategory(OTHER_CATEGORY);
 		String requestBodyEmptyCategory = objectMapper.writeValueAsString(otherCategory);
-		mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyEmptyCategory))
+		mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyEmptyCategory))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.size()").value(0));
 
 		// Good case:
 		this.createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
 		this.createBook(BOOK_TITLE + " 2", OTHER_CATEGORY, DEFAULT_PRICE);
-		mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyEmptyCategory))
+		mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyEmptyCategory))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.size()").value(2));
 	}
 
@@ -198,7 +198,7 @@ public class RestPublicControllerTest {
 			OrderPasswordInfo orderInfoNotFound = new OrderPasswordInfo(Long.valueOf(2), DEFAULT_PASSWORD);
 			String requestBodyNotFound = objectMapper.writeValueAsString(orderInfoNotFound);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
 					.andExpect(status().isNotFound());
 		}
 
@@ -218,7 +218,7 @@ public class RestPublicControllerTest {
 			OrderPasswordInfo OrderInfoWrongPwd = new OrderPasswordInfo(order.getOrderid(), "wrong_pwd");
 			String requestBodyWrongPwd = objectMapper.writeValueAsString(OrderInfoWrongPwd);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
 					.andExpect(status().isBadRequest());
 		}
 
@@ -238,7 +238,7 @@ public class RestPublicControllerTest {
 			OrderPasswordInfo orderInfo = new OrderPasswordInfo(order.getOrderid(), DEFAULT_PASSWORD);
 			String requestBody = objectMapper.writeValueAsString(orderInfo);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk()).andExpect(jsonPath("$.status").value("Created"));
 		}
 	}
@@ -425,7 +425,7 @@ public class RestPublicControllerTest {
 
 			BacketInfo backetInfoBacketNotFound = new BacketInfo(Long.valueOf(2), WRONG_PWD);
 			String requestBodyNotFound = objectMapper.writeValueAsString(backetInfoBacketNotFound);
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
 					.andExpect(status().isNotFound());
 		}
 
@@ -439,7 +439,7 @@ public class RestPublicControllerTest {
 
 			BacketInfo backetInfo = new BacketInfo(backetId, WRONG_PWD);
 			String requestBody = objectMapper.writeValueAsString(backetInfo);
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isUnauthorized());
 		}
 
@@ -453,7 +453,7 @@ public class RestPublicControllerTest {
 
 			BacketInfo backetInfoWrongPwd = new BacketInfo(backetId, WRONG_PWD);
 			String requestBodyWrongPwd = objectMapper.writeValueAsString(backetInfoWrongPwd);
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
 					.andExpect(status().isBadRequest());
 		}
 
@@ -468,7 +468,7 @@ public class RestPublicControllerTest {
 			BacketInfo backetInfo = new BacketInfo(backetId, DEFAULT_PASSWORD);
 			String requestBody = objectMapper.writeValueAsString(backetInfo);
 			// Empty backet case;
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk()).andExpect(jsonPath("$.size()").value(0));
 
 			Book book1 = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
@@ -476,7 +476,7 @@ public class RestPublicControllerTest {
 			createBacketBookCustomQuantity(1, book1, backet);
 			createBacketBookCustomQuantity(1, book2, backet);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk()).andExpect(jsonPath("$.size()").value(2));
 		}
 	}
@@ -518,7 +518,7 @@ public class RestPublicControllerTest {
 			BacketInfo backetInfoNotFound = new BacketInfo(Long.valueOf(2), DEFAULT_PASSWORD);
 			String requestBodyNotFound = objectMapper.writeValueAsString(backetInfoNotFound);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
 					.andExpect(status().isNotFound());
 		}
 
@@ -533,7 +533,7 @@ public class RestPublicControllerTest {
 			BacketInfo backetInfoPrivateBacket = new BacketInfo(backetId, DEFAULT_PASSWORD);
 			String requestBodyPrivateBacket = objectMapper.writeValueAsString(backetInfoPrivateBacket);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyPrivateBacket))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyPrivateBacket))
 					.andExpect(status().isUnauthorized());
 		}
 
@@ -548,7 +548,7 @@ public class RestPublicControllerTest {
 			BacketInfo backetInfoWrongPwd = new BacketInfo(backetId, WRONG_PWD);
 			String requestBodyWrongPwd = objectMapper.writeValueAsString(backetInfoWrongPwd);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
 					.andExpect(status().isBadRequest());
 		}
 
@@ -565,7 +565,7 @@ public class RestPublicControllerTest {
 
 			// Empty backet case
 			MvcResult result = mockMvc
-					.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+					.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk()).andReturn();
 			String resultAsString = result.getResponse().getContentAsString();
 			assertThat(resultAsString).isEqualTo("");
@@ -575,7 +575,7 @@ public class RestPublicControllerTest {
 			createBacketBookCustomQuantity(1, book1, newBacket);
 			createBacketBookCustomQuantity(2, book2, newBacket);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk()).andExpect(jsonPath("$.total").value(DEFAULT_PRICE * 3));
 		}
 	}
@@ -1050,7 +1050,7 @@ public class RestPublicControllerTest {
 			OrderPasswordInfo orderInfoNotFound = new OrderPasswordInfo(Long.valueOf(2), DEFAULT_PASSWORD);
 			String requestBodyNotFound = objectMapper.writeValueAsString(orderInfoNotFound);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyNotFound))
 					.andExpect(status().isNotFound());
 		}
 
@@ -1071,7 +1071,7 @@ public class RestPublicControllerTest {
 			OrderPasswordInfo orderInfoWrongPwd = new OrderPasswordInfo(orderId, WRONG_PWD);
 			String requestBodyWrongPwd = objectMapper.writeValueAsString(orderInfoWrongPwd);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongPwd))
 					.andExpect(status().isBadRequest());
 		}
 
@@ -1092,7 +1092,7 @@ public class RestPublicControllerTest {
 			OrderPasswordInfo orderInfo = new OrderPasswordInfo(orderId, DEFAULT_PASSWORD);
 			String requestBody = objectMapper.writeValueAsString(orderInfo);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk());
 		}
 	}
@@ -1108,7 +1108,7 @@ public class RestPublicControllerTest {
 
 			AccountCredentials credentials = new AccountCredentials("Wrong_Email@mail.com", DEFAULT_PASSWORD);
 			String requestBodyWrongEmail = objectMapper.writeValueAsString(credentials);
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongEmail))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongEmail))
 					.andExpect(status().isNotFound());
 		}
 
@@ -1121,7 +1121,7 @@ public class RestPublicControllerTest {
 
 			AccountCredentials credentials = new AccountCredentials("Wrong_Username", DEFAULT_PASSWORD);
 			String requestBodyWrongUsername = objectMapper.writeValueAsString(credentials);
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongUsername))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBodyWrongUsername))
 					.andExpect(status().isNotFound());
 		}
 
@@ -1137,13 +1137,13 @@ public class RestPublicControllerTest {
 
 			// email service is working case:
 			if (!springMailUsername.equals("default_value")) {
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isConflict());
 
 				// Email service is not working case:
 			} else {
 				// Wrong Password case
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isUnauthorized());
 				assertThat(user.isAccountVerified()).isTrue();
 			}
@@ -1161,13 +1161,13 @@ public class RestPublicControllerTest {
 
 			// email service is working case:
 			if (!springMailUsername.equals("default_value")) {
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isConflict());
 
 				// Email service is not working case:
 			} else {
 				// Wrong Password case
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isUnauthorized());
 				assertThat(user.isAccountVerified()).isTrue();
 			}
@@ -1186,14 +1186,14 @@ public class RestPublicControllerTest {
 			AccountCredentials credentials = new AccountCredentials(USERNAME, WRONG_PWD);
 			String requestBody = objectMapper.writeValueAsString(credentials);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isUnauthorized());
 
 			// By email case:
 			credentials = new AccountCredentials(EMAIL, WRONG_PWD);
 			requestBody = objectMapper.writeValueAsString(credentials);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isUnauthorized());
 		}
 
@@ -1210,7 +1210,7 @@ public class RestPublicControllerTest {
 			String requestBody = objectMapper.writeValueAsString(credentials);
 
 			if (springMailUsername.equals("default_value")) {
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isPartialContent());
 
 				assertThat(user.isAccountVerified()).isTrue();
@@ -1224,7 +1224,7 @@ public class RestPublicControllerTest {
 			requestBody = objectMapper.writeValueAsString(credentials);
 
 			if (springMailUsername.equals("default_value")) {
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isPartialContent());
 
 				assertThat(user.isAccountVerified()).isTrue();
@@ -1245,7 +1245,7 @@ public class RestPublicControllerTest {
 			assertThat(backets).isEmpty();
 
 			if (springMailUsername.equals("default_value")) {
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isOk())
 						.andExpect(header().string("Authorization", Matchers.containsString("Bearer")))
 						.andExpect(header().string("Allow", "USER"));
@@ -1265,7 +1265,7 @@ public class RestPublicControllerTest {
 			requestBody = objectMapper.writeValueAsString(credentials);
 
 			if (springMailUsername.equals("default_value")) {
-				mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 						.andExpect(status().isOk())
 						.andExpect(header().string("Authorization", Matchers.containsString("Bearer")))
 						.andExpect(header().string("Allow", "USER"));
@@ -1290,7 +1290,7 @@ public class RestPublicControllerTest {
 			AccountCredentials credentials = new AccountCredentials(USERNAME, DEFAULT_PASSWORD);
 			String requestBody = objectMapper.writeValueAsString(credentials);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk())
 					.andExpect(header().string("Authorization", Matchers.containsString("Bearer")))
 					.andExpect(header().string("Allow", "USER"));
@@ -1299,7 +1299,7 @@ public class RestPublicControllerTest {
 			credentials = new AccountCredentials(EMAIL, DEFAULT_PASSWORD);
 			requestBody = objectMapper.writeValueAsString(credentials);
 
-			mockMvc.perform(get(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+			mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 					.andExpect(status().isOk())
 					.andExpect(header().string("Authorization", Matchers.containsString("Bearer")))
 					.andExpect(header().string("Allow", "USER"));

@@ -82,7 +82,7 @@ public class RestPublicController {
 
 	}
 
-	@GetMapping("/booksbycategory")
+	@PostMapping("/booksbycategory")
 	public @ResponseBody List<Book> getBooksByCategory(@RequestBody Category category) {
 
 		return bookService.getBooksByCategory(category);
@@ -96,7 +96,7 @@ public class RestPublicController {
 
 	}
 
-	@GetMapping("/orderbypassword")
+	@PostMapping("/orderbypassword")
 	public @ResponseBody Order getOrderByIdAndPassword(@RequestBody OrderPasswordInfo orderInfo) {
 
 		return orderService.getOrderByIdAndPassword(orderInfo);
@@ -110,7 +110,7 @@ public class RestPublicController {
 
 	}
 
-	@GetMapping("/showcart")
+	@PostMapping("/showcart")
 	public @ResponseBody List<BookInCurrentCart> getBooksInBacketByIdAndPassword(@RequestBody BacketInfo backetInfo) {
 
 		return bookService.getBooksInBacketByIdAndPassword(backetInfo);
@@ -124,7 +124,7 @@ public class RestPublicController {
 
 	}
 
-	@GetMapping("/totalofbacket")
+	@PostMapping("/totalofbacket")
 	public @ResponseBody TotalOfBacket getTotalByBacketId(@RequestBody BacketInfo backetInfo) {
 
 		return backetService.getTotalByBacketId(backetInfo);
@@ -138,7 +138,7 @@ public class RestPublicController {
 
 	}
 
-	@GetMapping("/checkordernumber")
+	@PostMapping("/checkordernumber")
 	public ResponseEntity<?> checkOrderNumber(@RequestBody OrderPasswordInfo orderInfo) {
 
 		return orderService.checkOrderNumber(orderInfo);
@@ -187,7 +187,7 @@ public class RestPublicController {
 
 	}
 
-	@GetMapping("/login")
+	@PostMapping("/login")
 	public ResponseEntity<?> getToken(@RequestBody AccountCredentials credentials) {
 
 		return userService.getToken(credentials);
