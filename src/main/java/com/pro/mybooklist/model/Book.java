@@ -2,14 +2,15 @@ package com.pro.mybooklist.model;
 
 import java.util.List;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -19,10 +20,13 @@ public class Book {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
-	private String title, author, isbn;
+	private String title, author;
 	private int bookYear;
 	private double price;
 	private String url;
+	
+	@Column(unique = true)
+	private String isbn;
 
 	@ManyToOne
 	@JoinColumn(name = "categoryid")
@@ -32,8 +36,7 @@ public class Book {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
 	List<BacketBook> backetbooks;
 
-	public Book() {
-	}
+	public Book() {}
 
 	public Book(String title, String author, String isbn, int bookYear, double price, Category category, String url) {
 		super();

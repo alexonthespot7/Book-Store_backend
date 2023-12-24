@@ -1,15 +1,23 @@
-package com.pro.mybooklist.model;
+package com.pro.mybooklist.httpforms;
 
 public class PasswordInfo {
-	private String username;
+	private Long userId;
 	private String oldPassword;
 	private String newPassword;
 	
-	public String getUsername() {
-		return username;
+	public PasswordInfo() {}
+	
+	public PasswordInfo(Long userId, String oldPassword, String newPassword) {
+		this.userId = userId;
+		this.oldPassword = oldPassword;
+		this.newPassword = newPassword;
 	}
-	public void setUsername(String username) {
-		this.username = username;
+
+	public Long getUserId() {
+		return userId;
+	}
+	public void setUserId(Long userId) {
+		this.userId = userId;
 	}
 	public String getOldPassword() {
 		return oldPassword;

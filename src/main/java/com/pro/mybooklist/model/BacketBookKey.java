@@ -3,11 +3,13 @@ package com.pro.mybooklist.model;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class BacketBookKey implements Serializable {
+	private static final long serialVersionUID = -6860012402807015054L;
+
 	@Column(name = "backetid")
 	Long backetid;
 	

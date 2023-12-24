@@ -2,14 +2,14 @@ package com.pro.mybooklist.model;
 
 import java.util.List;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -96,24 +96,6 @@ public class User {
 		this.city = "";
 		this.street = "";
 		this.postcode = "";
-	}
-	
-	
-
-	public User(String firstname, String lastname, String username, String password, String role, String email,
-			boolean accountVerified, String country, String city, String street, String postcode) {
-		super();
-		this.firstname = firstname;
-		this.lastname = lastname;
-		this.username = username;
-		this.password = password;
-		this.role = role;
-		this.email = email;
-		this.accountVerified = accountVerified;
-		this.country = country;
-		this.city = city;
-		this.street = street;
-		this.postcode = postcode;
 	}
 
 	public Long getId() {

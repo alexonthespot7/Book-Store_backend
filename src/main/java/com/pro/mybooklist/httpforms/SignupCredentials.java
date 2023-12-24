@@ -1,4 +1,4 @@
-package com.pro.mybooklist.model;
+package com.pro.mybooklist.httpforms;
 
 public class SignupCredentials {
 	
@@ -8,6 +8,16 @@ public class SignupCredentials {
 	private String email;
 	private String password;
 	
+	public SignupCredentials() {}
+	
+	public SignupCredentials(String firstname, String lastname, String username, String email, String password) {
+		this.firstname = firstname;
+		this.lastname = lastname;
+		this.username = username;
+		this.email = email;
+		this.password = password;
+	}
+
 	public String getFirstname() {
 		return firstname;
 	}

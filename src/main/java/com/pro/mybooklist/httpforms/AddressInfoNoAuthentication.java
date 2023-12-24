@@ -1,7 +1,6 @@
-package com.pro.mybooklist.model;
+package com.pro.mybooklist.httpforms;
 
-public class OrderInfo {
-	private String status;
+public class AddressInfoNoAuthentication {
 	private String firstname;
 	private String lastname;
 	private String country;
@@ -9,13 +8,26 @@ public class OrderInfo {
 	private String street;
 	private String postcode;
 	private String email;
+	private String note;
+	private Long backetid;
+	private String password;
 	
-	public String getStatus() {
-		return status;
+	public AddressInfoNoAuthentication() {}
+	
+	public AddressInfoNoAuthentication(String firstname, String lastname, String country, String city, String street,
+			String postcode, String email, String note, Long backetid, String password) {
+		this.firstname = firstname;
+		this.lastname = lastname;
+		this.country = country;
+		this.city = city;
+		this.street = street;
+		this.postcode = postcode;
+		this.email = email;
+		this.note = note;
+		this.backetid = backetid;
+		this.password = password;
 	}
-	public void setStatus(String status) {
-		this.status = status;
-	}
+
 	public String getFirstname() {
 		return firstname;
 	}
@@ -57,5 +69,23 @@ public class OrderInfo {
 	}
 	public void setEmail(String email) {
 		this.email = email;
+	}
+	public String getNote() {
+		return note;
+	}
+	public void setNote(String note) {
+		this.note = note;
+	}
+	public Long getBacketid() {
+		return backetid;
+	}
+	public void setBacketid(Long backetid) {
+		this.backetid = backetid;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
 	}
 }
