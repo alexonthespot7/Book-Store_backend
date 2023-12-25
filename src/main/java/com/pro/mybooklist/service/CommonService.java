@@ -76,9 +76,11 @@ public class CommonService {
 	private void checkCurrentBacketsOfUser(Long userId) {
 		List<Backet> currentBackets = backetRepository.findCurrentByUserid(userId);
 
-		if (currentBackets.size() > 0)
-			throw new ResponseStatusException(HttpStatus.PARTIAL_CONTENT,
-					"User shouldn't have had a backet before verification");
+		if (currentBackets.size() > 0) {
+			for (Backet currentBacketOfUser : currentBackets) {
+				backetRepository.delete(currentBacketOfUser);
+			}
+		}
 	}
 
 	private Backet findBacket(Long backetId) {

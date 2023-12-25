@@ -127,7 +127,7 @@ public class UserService {
 			mailService.sendVerificationEmail(newUser);
 			return new ResponseEntity<>("We sent verification link to your email address :)", HttpStatus.OK);
 		} catch (MailAuthenticationException e) {
-			this.verifyUser(newUser);
+			this.verifyUserAndCreateCurrentBacket(newUser);
 			return new ResponseEntity<>("Registration went well, you can login now", HttpStatus.ACCEPTED);
 		}
 	}

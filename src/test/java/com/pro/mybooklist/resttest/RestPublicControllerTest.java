@@ -1211,13 +1211,16 @@ public class RestPublicControllerTest {
 
 			if (springMailUsername.equals("default_value")) {
 				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-						.andExpect(status().isPartialContent());
+						.andExpect(status().isOk());
 
 				assertThat(user.isAccountVerified()).isTrue();
+				List<Backet> currentBackets = backetRepository.findCurrentByUserid(user.getId());
+				assertThat(currentBackets).hasSize(1);
 			}
 
 			user.setAccountVerified(false);
 			urepository.save(user);
+			createBacketWithUser(true, USERNAME);
 
 			// By email case:
 			credentials = new AccountCredentials(EMAIL, DEFAULT_PASSWORD);
@@ -1225,9 +1228,11 @@ public class RestPublicControllerTest {
 
 			if (springMailUsername.equals("default_value")) {
 				mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-						.andExpect(status().isPartialContent());
+						.andExpect(status().isOk());
 
 				assertThat(user.isAccountVerified()).isTrue();
+				List<Backet> currentBackets = backetRepository.findCurrentByUserid(user.getId());
+				assertThat(currentBackets).hasSize(1);
 			}
 		}
 
@@ -1410,7 +1415,7 @@ public class RestPublicControllerTest {
 			TokenInfo tokenInfo = new TokenInfo(token);
 			String requestBody = objectMapper.writeValueAsString(tokenInfo);
 			mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isPartialContent());
+					.andExpect(status().isOk());
 		}
 
 		@Test
@@ -1486,11 +1491,19 @@ public class RestPublicControllerTest {
 			user.setVerificationCode("SomeCode");
 			urepository.save(user);
 
-			mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isPartialContent());
-			assertThat(user.isAccountVerified()).isTrue();
-			backets = (List<Backet>) backetRepository.findAll();
-			assertThat(backets).hasSize(1);
+			if (!springMailUsername.equals("default_value")) {
+				mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+						.andExpect(status().isOk());
+				assertThat(user.isAccountVerified()).isTrue();
+				backets = (List<Backet>) backetRepository.findAll();
+				assertThat(backets).hasSize(1);
+			} else {
+				mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+						.andExpect(status().isNotImplemented());
+				assertThat(user.isAccountVerified()).isTrue();
+				backets = (List<Backet>) backetRepository.findAll();
+				assertThat(backets).hasSize(1);
+			}
 		}
 
 		@Test
