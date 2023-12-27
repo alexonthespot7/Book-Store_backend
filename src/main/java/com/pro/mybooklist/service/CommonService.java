@@ -13,6 +13,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.pro.mybooklist.MyUser;
 import com.pro.mybooklist.model.Backet;
 import com.pro.mybooklist.model.BacketRepository;
+import com.pro.mybooklist.model.Book;
+import com.pro.mybooklist.model.BookRepository;
 import com.pro.mybooklist.model.Order;
 import com.pro.mybooklist.model.OrderRepository;
 import com.pro.mybooklist.model.User;
@@ -28,6 +30,9 @@ public class CommonService {
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private BookRepository bookRepository;
 
 	// Method to find the backet and check if it's private:
 	public Backet findBacketAndCheckIsPrivate(Long backetId) {
@@ -53,16 +58,25 @@ public class CommonService {
 	}
 
 	// The method to find out if the user has exactly one current backet:
-	public Backet findCurrentBacketOfUser(Long userId) {
+	public Backet findCurrentBacketOfUser(User user) {
+		Long userId = user.getId();
 		List<Backet> currentBacketsOfUser = backetRepository.findCurrentByUserid(userId);
 
-		if (currentBacketsOfUser.size() != 1)
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-					"There should be exactly 1 current backet for user. Actual quantity: "
-							+ currentBacketsOfUser.size());
+		if (currentBacketsOfUser.size() != 1) {
+			return this.handleUserHasMoreOrLessThanOneCurrentBacketCase(currentBacketsOfUser, user);
+		}
 
 		Backet currentBacket = currentBacketsOfUser.get(0);
 		return currentBacket;
+	}
+	
+	private Backet handleUserHasMoreOrLessThanOneCurrentBacketCase(List<Backet> currentBacketsOfUser, User user) {
+		for (Backet currentBacketOfUser : currentBacketsOfUser) {
+			backetRepository.delete(currentBacketOfUser);
+		}
+		Backet newCurrentBacketForUser = new Backet(true, user);
+		backetRepository.save(newCurrentBacketForUser);
+		return newCurrentBacketForUser;
 	}
 
 	// Method to add new current Backet for the user
@@ -183,4 +197,14 @@ public class CommonService {
 
 		return user;
 	}
+	
+	// Method to find the book by id:
+		public Book findBook(Long bookId) {
+			Optional<Book> optionalBook = bookRepository.findById(bookId);
+			if (!optionalBook.isPresent())
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The book wasn't found by id");
+
+			Book book = optionalBook.get();
+			return book;
+		}
 }

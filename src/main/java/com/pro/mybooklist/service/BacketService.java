@@ -19,7 +19,6 @@ import com.pro.mybooklist.model.BacketBookKey;
 import com.pro.mybooklist.model.BacketBookRepository;
 import com.pro.mybooklist.model.BacketRepository;
 import com.pro.mybooklist.model.Book;
-import com.pro.mybooklist.model.BookRepository;
 import com.pro.mybooklist.model.User;
 import com.pro.mybooklist.sqlforms.QuantityOfBacket;
 import com.pro.mybooklist.sqlforms.TotalOfBacket;
@@ -31,9 +30,6 @@ public class BacketService {
 
 	@Autowired
 	private BacketBookRepository backetBookRepository;
-
-	@Autowired
-	private BookRepository bookRepository;
 
 	@Autowired
 	private CommonService commonService;
@@ -52,7 +48,7 @@ public class BacketService {
 	public TotalOfBacket getCurrentCartTotal(Authentication authentication) {
 		User user = commonService.checkAuthentication(authentication);
 		Long userId = user.getId();
-		commonService.findCurrentBacketOfUser(userId);
+		commonService.findCurrentBacketOfUser(user);
 
 		TotalOfBacket totalOfCurrentBacket = backetRepository.findTotalOfCurrentCart(userId);
 		return totalOfCurrentBacket;
@@ -63,7 +59,7 @@ public class BacketService {
 	public QuantityOfBacket getCurrentCartQuantity(Authentication authentication) {
 		User user = commonService.checkAuthentication(authentication);
 		Long userId = user.getId();
-		commonService.findCurrentBacketOfUser(userId);
+		commonService.findCurrentBacketOfUser(user);
 
 		QuantityOfBacket quantityOfCurrentBacket = backetRepository.findQuantityInCurrent(userId);
 		return quantityOfCurrentBacket;
@@ -108,15 +104,14 @@ public class BacketService {
 		int additionalQuantity = quantityInfo.getQuantity();
 
 		User user = commonService.checkAuthentication(authentication);
-		Long userId = user.getId();
-		Backet currentBacket = commonService.findCurrentBacketOfUser(userId);
+		Backet currentBacket = commonService.findCurrentBacketOfUser(user);
 
 		return this.addQuantityOfBookToTheBacket(currentBacket, bookId, additionalQuantity);
 	}
 
 	private ResponseEntity<?> addQuantityOfBookToTheBacket(Backet backet, Long bookId, int additionalQuantity) {
 		Long backetId = backet.getBacketid();
-		Book book = this.findBook(bookId);
+		Book book = commonService.findBook(bookId);
 		Optional<BacketBook> optionalBacketBook = this.getOptionalBacketBook(backetId, bookId);
 
 		if (optionalBacketBook.isPresent()) {
@@ -154,15 +149,14 @@ public class BacketService {
 	// authenticated user:
 	public ResponseEntity<?> reduceBookAuthenticated(Long bookId, Authentication authentication) {
 		User user = commonService.checkAuthentication(authentication);
-		Long userId = user.getId();
-		Backet currentBacket = commonService.findCurrentBacketOfUser(userId);
+		Backet currentBacket = commonService.findCurrentBacketOfUser(user);
 
 		return this.reduceQuantityOfBookInBacket(currentBacket, bookId);
 	}
 
 	private ResponseEntity<?> reduceQuantityOfBookInBacket(Backet backet, Long bookId) {
 		Long backetId = backet.getBacketid();
-		this.findBook(bookId);
+		commonService.findBook(bookId);
 
 		BacketBook backetBook = this.findBacketBook(bookId, backetId);
 		int quantity = backetBook.getQuantity();
@@ -193,15 +187,14 @@ public class BacketService {
 	// Method to delete the book from the current backet of the authenticated user:
 	public ResponseEntity<?> deleteBookFromCurrentBacket(Long bookId, Authentication authentication) {
 		User user = commonService.checkAuthentication(authentication);
-		Long userId = user.getId();
-		Backet currentBacket = commonService.findCurrentBacketOfUser(userId);
+		Backet currentBacket = commonService.findCurrentBacketOfUser(user);
 
 		return this.deleteBookFromBacket(currentBacket, bookId);
 	}
 
 	private ResponseEntity<?> deleteBookFromBacket(Backet backet, Long bookId) {
 		Long backetId = backet.getBacketid();
-		this.findBook(bookId);
+		commonService.findBook(bookId);
 		BacketBook backetBook = this.findBacketBook(bookId, backetId);
 
 		return this.deleteBookFromCart(backetBook);
@@ -209,21 +202,11 @@ public class BacketService {
 
 	// Method to clear current backet of the authenticated user:
 	public ResponseEntity<?> clearCurrentBacket(Long userId, Authentication authentication) {
-		commonService.checkAuthenticationAndAuthorize(authentication, userId);
-		Backet currentBacket = commonService.findCurrentBacketOfUser(userId);
+		User user = commonService.checkAuthenticationAndAuthorize(authentication, userId);
+		Backet currentBacket = commonService.findCurrentBacketOfUser(user);
 
 		long deleted = backetBookRepository.deleteByBacket(currentBacket);
 		return new ResponseEntity<>(deleted + " records were deleted from current cart", HttpStatus.OK);
-	}
-
-	// Method to find the book by id:
-	private Book findBook(Long bookId) {
-		Optional<Book> optionalBook = bookRepository.findById(bookId);
-		if (!optionalBook.isPresent())
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The book wasn't found by id");
-
-		Book book = optionalBook.get();
-		return book;
 	}
 
 	// Method to find BacketBook:

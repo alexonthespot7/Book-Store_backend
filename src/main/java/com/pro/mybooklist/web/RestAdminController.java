@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pro.mybooklist.httpforms.OrderInfo;
 import com.pro.mybooklist.httpforms.RoleInfo;
+import com.pro.mybooklist.model.Book;
 import com.pro.mybooklist.model.Order;
 import com.pro.mybooklist.model.User;
+import com.pro.mybooklist.service.BookService;
 import com.pro.mybooklist.service.OrderService;
 import com.pro.mybooklist.service.UserService;
 
@@ -33,6 +35,9 @@ public class RestAdminController {
 
 	@Autowired
 	private OrderService orderService;
+	
+	@Autowired
+	private BookService bookService;
 
 	@GetMapping("/users")
 	public @ResponseBody List<User> getUsers() {
@@ -53,6 +58,13 @@ public class RestAdminController {
 
 		return orderService.getOrderById(orderId);
 
+	}
+	
+	@PutMapping("books/{bookid}")
+	public ResponseEntity<?> updateBook(@PathVariable("bookid") Long bookId, @RequestBody Book book) {
+		
+		return bookService.updateBook(bookId, book);
+		
 	}
 
 	@PutMapping("/updateorder/{orderid}")

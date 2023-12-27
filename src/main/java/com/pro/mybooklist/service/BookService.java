@@ -4,13 +4,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.pro.mybooklist.httpforms.BacketInfo;
 import com.pro.mybooklist.model.Book;
 import com.pro.mybooklist.model.BookRepository;
 import com.pro.mybooklist.model.Category;
+import com.pro.mybooklist.model.CategoryRepository;
 import com.pro.mybooklist.model.User;
 import com.pro.mybooklist.sqlforms.BookInCurrentCart;
 import com.pro.mybooklist.sqlforms.RawBookInfo;
@@ -19,6 +23,9 @@ import com.pro.mybooklist.sqlforms.RawBookInfo;
 public class BookService {
 	@Autowired
 	private BookRepository bookRepository;
+
+	@Autowired
+	private CategoryRepository categoryRepository;
 
 	@Autowired
 	private CommonService commonService;
@@ -60,7 +67,7 @@ public class BookService {
 	public List<Long> getIdsOfBooksInCurrentCart(Authentication authentication) {
 		User user = commonService.checkAuthentication(authentication);
 		Long userId = user.getId();
-		commonService.findCurrentBacketOfUser(userId);
+		commonService.findCurrentBacketOfUser(user);
 
 		List<Long> idsOfBooksInCurrentCart = bookRepository.findIdsOfBooksInCurrentCart(userId);
 		return idsOfBooksInCurrentCart;
@@ -80,8 +87,8 @@ public class BookService {
 	// Method to get the list of books in current backet of the user by user id and
 	// authentication
 	public List<BookInCurrentCart> getCurrentCartByUserId(Long userId, Authentication authentication) {
-		commonService.checkAuthenticationAndAuthorize(authentication, userId);
-		commonService.findCurrentBacketOfUser(userId);
+		User user = commonService.checkAuthenticationAndAuthorize(authentication, userId);
+		commonService.findCurrentBacketOfUser(user);
 
 		List<BookInCurrentCart> booksInCurrentBacketOfUser = bookRepository.findBooksInCurrentBacketByUserid(userId);
 		return booksInCurrentBacketOfUser;
@@ -93,5 +100,37 @@ public class BookService {
 
 		List<BookInCurrentCart> booksInOrder = bookRepository.findBooksInOrder(orderId);
 		return booksInOrder;
+	}
+
+	// Method to update book:
+	public ResponseEntity<?> updateBook(Long bookId, Book updatedBook) {
+		Book book = commonService.findBook(bookId);
+		this.updateBook(book, updatedBook);
+
+		return new ResponseEntity<>("The book was updated successfully", HttpStatus.OK);
+	}
+
+	private void updateBook(Book bookToUpdate, Book updatedBook) {
+		bookToUpdate.setTitle(updatedBook.getTitle());
+		bookToUpdate.setAuthor(updatedBook.getAuthor());
+		bookToUpdate.setIsbn(updatedBook.getIsbn());
+		bookToUpdate.setBookYear(updatedBook.getBookYear());
+		bookToUpdate.setPrice(updatedBook.getPrice());
+		bookToUpdate.setUrl(updatedBook.getUrl());
+
+		Category updatedCategory = this.findCategory(updatedBook.getCategory());
+		bookToUpdate.setCategory(updatedCategory);
+		bookRepository.save(bookToUpdate);
+	}
+
+	private Category findCategory(Category updatedCategory) {
+		Long updatedCategoryId = updatedCategory.getCategoryid();
+		Optional<Category> optionalCategory = categoryRepository.findById(updatedCategoryId);
+
+		if (!optionalCategory.isPresent())
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "The category wasn't found");
+
+		Category category = optionalCategory.get();
+		return category;
 	}
 }

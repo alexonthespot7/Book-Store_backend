@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -66,9 +65,6 @@ public class RestAuthenticatedControllerTest {
 
 	private static final String DEFAULT_PASSWORD = "test";
 	private static final String WRONG_PWD = "wrong_pwd";
-
-	@Value("${spring.mail.username}")
-	private String springMailUsername;
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -169,36 +165,6 @@ public class RestAuthenticatedControllerTest {
 	class testAddBookToCurrentBacket {
 		@Test
 		@Rollback
-		public void testAddBookToCurrentBacketNoCurrentBacketsCase() throws Exception {
-			String requestURIBookNotFound = "/additem/11";
-
-			backetRepository.deleteAll();
-
-			QuantityInfo quantityInfo = new QuantityInfo(3);
-			String requestBody = objectMapper.writeValueAsString(quantityInfo);
-
-			mockMvc.perform(post(requestURIBookNotFound).header("Authorization", jwt)
-					.contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isInternalServerError());
-		}
-
-		@Test
-		@Rollback
-		public void testAddBookToCurrentBacketMoreThan1CurrentBacketsCase() throws Exception {
-			String requestURIBookNotFound = "/additem/11";
-
-			createSecondCurrentBacketForAuthenticatedUser();
-
-			QuantityInfo quantityInfo = new QuantityInfo(3);
-			String requestBody = objectMapper.writeValueAsString(quantityInfo);
-
-			mockMvc.perform(post(requestURIBookNotFound).header("Authorization", jwt)
-					.contentType(MediaType.APPLICATION_JSON).content(requestBody))
-					.andExpect(status().isInternalServerError());
-		}
-
-		@Test
-		@Rollback
 		public void testAddBookToCurrentBacketBookNotFoundCase() throws Exception {
 			String requestURIBookNotFound = "/additem/11";
 
@@ -236,6 +202,47 @@ public class RestAuthenticatedControllerTest {
 			assertThat(backetBooks).hasSize(1);
 			assertThat(backetBooks.get(0).getQuantity()).isEqualTo(2);
 		}
+
+		@Test
+		@Rollback
+		public void testAddBookToCurrentBacketNoCurrentBacketsCase() throws Exception {
+			String requestURI = "/additem/";
+
+			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
+			Long bookId = book.getId();
+			String requestURIGood = requestURI + bookId;
+			QuantityInfo quantityInfo = new QuantityInfo(1);
+			String requestBody = objectMapper.writeValueAsString(quantityInfo);
+			backetRepository.deleteAll();
+
+			mockMvc.perform(post(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
+					.content(requestBody)).andExpect(status().isOk());
+
+			List<BacketBook> backetBooks = (List<BacketBook>) backetBookRepository.findAll();
+			assertThat(backetBooks).hasSize(1);
+			assertThat(backetBooks.get(0).getQuantity()).isEqualTo(1);
+		}
+
+		@Test
+		@Rollback
+		public void testAddBookToCurrentBacketMoreThan1CurrentBacketsCase() throws Exception {
+			String requestURI = "/additem/";
+
+			createSecondCurrentBacketForAuthenticatedUser();
+
+			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
+			Long bookId = book.getId();
+			String requestURIGood = requestURI + bookId;
+			QuantityInfo quantityInfo = new QuantityInfo(1);
+			String requestBody = objectMapper.writeValueAsString(quantityInfo);
+
+			mockMvc.perform(post(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
+					.content(requestBody)).andExpect(status().isOk());
+
+			List<BacketBook> backetBooks = (List<BacketBook>) backetBookRepository.findAll();
+			assertThat(backetBooks).hasSize(1);
+			assertThat(backetBooks.get(0).getQuantity()).isEqualTo(1);
+		}
 	}
 
 	@Nested
@@ -247,11 +254,8 @@ public class RestAuthenticatedControllerTest {
 
 			backetRepository.deleteAll();
 
-			MvcResult result = mockMvc.perform(get(requestURI).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError()).andReturn();
-
-			String message = result.getResponse().getErrorMessage();
-			assertThat(message).isEqualTo("There should be exactly 1 current backet for user. Actual quantity: 0");
+			mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
+					.andExpect(jsonPath("$.size()").value(0));
 		}
 
 		@Test
@@ -261,11 +265,8 @@ public class RestAuthenticatedControllerTest {
 
 			createSecondCurrentBacketForAuthenticatedUser();
 
-			MvcResult result = mockMvc.perform(get(requestURI).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError()).andReturn();
-
-			String message = result.getResponse().getErrorMessage();
-			assertThat(message).isEqualTo("There should be exactly 1 current backet for user. Actual quantity: 2");
+			mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
+					.andExpect(jsonPath("$.size()").value(0));
 		}
 
 		@Test
@@ -304,14 +305,14 @@ public class RestAuthenticatedControllerTest {
 			// No current backet case:
 			backetRepository.deleteAll();
 
-			mockMvc.perform(get(requestURIGood).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
+			mockMvc.perform(get(requestURIGood).header("Authorization", jwt)).andExpect(status().isOk())
+					.andExpect(jsonPath("$.size()").value(0));
 
 			// More than one current Backet case:
 			createBacketWithUser(true, USERNAME, EMAIL);
 			createSecondCurrentBacketForAuthenticatedUser();
-			mockMvc.perform(get(requestURIGood).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
+			mockMvc.perform(get(requestURIGood).header("Authorization", jwt)).andExpect(status().isOk())
+					.andExpect(jsonPath("$.size()").value(0));
 		}
 
 		@Test
@@ -341,12 +342,16 @@ public class RestAuthenticatedControllerTest {
 			// No current backet case:
 			backetRepository.deleteAll();
 
-			mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isInternalServerError());
+			MvcResult result = mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
+					.andReturn();
+			assertThat(result.getResponse().getContentAsString()).isEqualTo("");
 
 			// More than one current Backet case:
 			createBacketWithUser(true, USERNAME, EMAIL);
 			createSecondCurrentBacketForAuthenticatedUser();
-			mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isInternalServerError());
+			result = mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
+					.andReturn();
+			assertThat(result.getResponse().getContentAsString()).isEqualTo("");
 		}
 
 		@Test
@@ -387,14 +392,12 @@ public class RestAuthenticatedControllerTest {
 			// No current backet case:
 			backetRepository.deleteAll();
 
-			mockMvc.perform(delete(requestURIGood).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
+			mockMvc.perform(delete(requestURIGood).header("Authorization", jwt)).andExpect(status().isOk());
 
 			// More than one current Backet case:
 			createBacketWithUser(true, USERNAME, EMAIL);
 			createSecondCurrentBacketForAuthenticatedUser();
-			mockMvc.perform(delete(requestURIGood).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
+			mockMvc.perform(delete(requestURIGood).header("Authorization", jwt)).andExpect(status().isOk());
 		}
 
 		@Test
@@ -418,24 +421,6 @@ public class RestAuthenticatedControllerTest {
 	class testReduceBookAuthenticated {
 		@Test
 		@Rollback
-		public void testReduceBookAuthenticatedNotOneCurrentBacketCase() throws Exception {
-			String requestURIBookNotFound = "/reduceitem/24";
-
-			// No current backet case:
-			backetRepository.deleteAll();
-
-			mockMvc.perform(put(requestURIBookNotFound).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
-
-			// More than one current Backet case:
-			createBacketWithUser(true, USERNAME, EMAIL);
-			createSecondCurrentBacketForAuthenticatedUser();
-			mockMvc.perform(put(requestURIBookNotFound).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
-		}
-
-		@Test
-		@Rollback
 		public void testReduceBookAuthenticatedBookNotFoundCase() throws Exception {
 			String requestURIBookNotFound = "/reduceitem/24";
 
@@ -454,6 +439,27 @@ public class RestAuthenticatedControllerTest {
 
 			mockMvc.perform(put(requestURIBookNotInBacket).header("Authorization", jwt))
 					.andExpect(status().isConflict());
+		}
+		
+		@Test
+		@Rollback
+		public void testReduceBookAuthenticatedNotOneCurrentBacketCase() throws Exception {
+			String requestURI = "/reduceitem/";
+			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
+			Long bookId = book.getId();
+			String requestURIBookNotInBacket = requestURI + bookId;
+
+			// No current backet case:
+			backetRepository.deleteAll();
+
+			mockMvc.perform(put(requestURIBookNotInBacket).header("Authorization", jwt))
+			.andExpect(status().isConflict());
+
+			// More than one current Backet case:
+			createBacketWithUser(true, USERNAME, EMAIL);
+			createSecondCurrentBacketForAuthenticatedUser();
+			mockMvc.perform(put(requestURIBookNotInBacket).header("Authorization", jwt))
+			.andExpect(status().isConflict());
 		}
 
 		@Test
@@ -489,24 +495,6 @@ public class RestAuthenticatedControllerTest {
 	class testDeleteBookFromCurrentBacket {
 		@Test
 		@Rollback
-		public void testDeleteBookFromCurrentBacketNotOneCurrentBacketCase() throws Exception {
-			String requestURIBookNotFound = "/deleteitem/24";
-
-			// No current backet case:
-			backetRepository.deleteAll();
-
-			mockMvc.perform(delete(requestURIBookNotFound).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
-
-			// More than one current Backet case:
-			createBacketWithUser(true, USERNAME, EMAIL);
-			createSecondCurrentBacketForAuthenticatedUser();
-			mockMvc.perform(delete(requestURIBookNotFound).header("Authorization", jwt))
-					.andExpect(status().isInternalServerError());
-		}
-
-		@Test
-		@Rollback
 		public void testDeleteBookFromCurrentBacketBookNotFoundCase() throws Exception {
 			String requestURIBookNotFound = "/deleteitem/24";
 
@@ -526,6 +514,28 @@ public class RestAuthenticatedControllerTest {
 
 			mockMvc.perform(delete(requestURIBookNotInBacket).header("Authorization", jwt))
 					.andExpect(status().isConflict());
+		}
+
+		@Test
+		@Rollback
+		// In this case the book is not in backet
+		public void testDeleteBookFromCurrentBacketNotOneCurrentBacketCase() throws Exception {
+			String requestURI = "/deleteitem/";
+
+			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, DEFAULT_PRICE);
+			Long bookId = book.getId();
+
+			String requestURIGood = requestURI + bookId;
+
+			// No current backet case:
+			backetRepository.deleteAll();
+
+			mockMvc.perform(delete(requestURIGood).header("Authorization", jwt)).andExpect(status().isConflict());
+
+			// More than one current Backet case:
+			createBacketWithUser(true, USERNAME, EMAIL);
+			createSecondCurrentBacketForAuthenticatedUser();
+			mockMvc.perform(delete(requestURIGood).header("Authorization", jwt)).andExpect(status().isConflict());
 		}
 
 		@Test
@@ -551,26 +561,30 @@ public class RestAuthenticatedControllerTest {
 	class testGetCurrentCartQuantity {
 		@Test
 		@Rollback
+		public void testGetCurrentCartQuantityEmptyBacketGoodCase() throws Exception {
+			String requestURI = "/currentbacketquantity";
+
+			MvcResult result = mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
+					.andReturn();
+			assertThat(result.getResponse().getContentAsString()).isEqualTo("");
+		}
+
+		@Test
+		@Rollback
 		public void testGetCurrentCartQuantityNotOneCurrentBacketCase() throws Exception {
 			String requestURI = "/currentbacketquantity";
 
 			// No current backet case:
 			backetRepository.deleteAll();
 
-			mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isInternalServerError());
+			MvcResult result = mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
+					.andReturn();
+			assertThat(result.getResponse().getContentAsString()).isEqualTo("");
 
 			// More than one current Backet case:
 			createBacketWithUser(true, USERNAME, EMAIL);
 			createSecondCurrentBacketForAuthenticatedUser();
-			mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isInternalServerError());
-		}
-
-		@Test
-		@Rollback
-		public void testGetCurrentCartQuantityEmptyBacketGoodCase() throws Exception {
-			String requestURI = "/currentbacketquantity";
-
-			MvcResult result = mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
+			result = mockMvc.perform(get(requestURI).header("Authorization", jwt)).andExpect(status().isOk())
 					.andReturn();
 			assertThat(result.getResponse().getContentAsString()).isEqualTo("");
 		}
@@ -617,19 +631,32 @@ public class RestAuthenticatedControllerTest {
 			backetRepository.deleteAll();
 
 			mockMvc.perform(post(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
-					.content(requestBody)).andExpect(status().isInternalServerError());
+					.content(requestBody)).andExpect(status().isNotAcceptable());
 
 			// More than one current Backet case:
 			createBacketWithUser(true, USERNAME, EMAIL);
 			createSecondCurrentBacketForAuthenticatedUser();
 
 			mockMvc.perform(post(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
-					.content(requestBody)).andExpect(status().isInternalServerError());
+					.content(requestBody)).andExpect(status().isNotAcceptable());
 		}
 
 		@Test
 		@Rollback
 		public void testMakeSaleByUserIdBacketIsEmptyCase() throws Exception {
+			String requestURI = "/makesale/";
+
+			String requestURIGood = requestURI + authenticatedUserId;
+			AddressInfo addressInfoDefaultEmail = createAddressInfo(EMAIL);
+			String requestBody = objectMapper.writeValueAsString(addressInfoDefaultEmail);
+
+			mockMvc.perform(post(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
+					.content(requestBody)).andExpect(status().isNotAcceptable());
+		}
+
+		@Test
+		@Rollback
+		public void testMakeSaleByUserIdGoodCase() throws Exception {
 			String requestURI = "/makesale/";
 
 			addTwoBooksToAuthenticatedUserCurrentBacket();
@@ -646,20 +673,6 @@ public class RestAuthenticatedControllerTest {
 			assertThat(idsOfNotCurrentBacketsOfUser).hasSize(1);
 			List<Backet> backets = (List<Backet>) backetRepository.findAll();
 			assertThat(backets).hasSize(2);
-
-		}
-
-		@Test
-		@Rollback
-		public void testMakeSaleByUserIdGoodCase() throws Exception {
-			String requestURI = "/makesale/";
-
-			String requestURIGood = requestURI + authenticatedUserId;
-			AddressInfo addressInfoDefaultEmail = createAddressInfo(EMAIL);
-			String requestBody = objectMapper.writeValueAsString(addressInfoDefaultEmail);
-
-			mockMvc.perform(post(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
-					.content(requestBody)).andExpect(status().isNotAcceptable());
 		}
 	}
 
@@ -878,7 +891,8 @@ public class RestAuthenticatedControllerTest {
 
 		AccountCredentials creds = new AccountCredentials(USERNAME, DEFAULT_PASSWORD);
 		String requestBody = objectMapper.writeValueAsString(creds);
-		MvcResult result = mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+		MvcResult result = mockMvc
+				.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 				.andExpect(status().isOk()).andReturn();
 
 		jwt = result.getResponse().getHeader("Authorization");

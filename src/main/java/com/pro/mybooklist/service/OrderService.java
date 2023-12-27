@@ -125,7 +125,7 @@ public class OrderService {
 	public OrderPasswordInfo makeSaleByUserId(Long userId, AddressInfo addressInfo, Authentication authentication)
 			throws MessagingException, UnsupportedEncodingException {
 		User user = commonService.checkAuthenticationAndAuthorize(authentication, userId);
-		Backet currentBacket = commonService.findCurrentBacketOfUser(userId);
+		Backet currentBacket = commonService.findCurrentBacketOfUser(user);
 
 		String passwordRandom = this.checkIfBacketIsEmptyAndSetBacketNotCurrentAndGeneratePassword(currentBacket);
 		String hashedPassword = commonService.encodePassword(passwordRandom);
