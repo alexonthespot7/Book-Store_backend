@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.pro.mybooklist.httpforms.BacketInfo;
+import com.pro.mybooklist.httpforms.BookUpdate;
 import com.pro.mybooklist.model.Book;
 import com.pro.mybooklist.model.BookRepository;
 import com.pro.mybooklist.model.Category;
@@ -103,14 +104,26 @@ public class BookService {
 	}
 
 	// Method to update book:
-	public ResponseEntity<?> updateBook(Long bookId, Book updatedBook) {
+	public ResponseEntity<?> updateBook(Long bookId, BookUpdate updatedBook) {
 		Book book = commonService.findBook(bookId);
+		String isbn = updatedBook.getIsbn();
+		this.checkIsbn(isbn, book);
 		this.updateBook(book, updatedBook);
 
 		return new ResponseEntity<>("The book was updated successfully", HttpStatus.OK);
 	}
 
-	private void updateBook(Book bookToUpdate, Book updatedBook) {
+	private void checkIsbn(String isbn, Book bookToUpdate) {
+		Optional<Book> optionalBook = bookRepository.findByIsbn(isbn);
+		if (optionalBook.isPresent()) {
+			Book bookInDb = optionalBook.get();
+			if (bookInDb.getId() != bookToUpdate.getId())
+				throw new ResponseStatusException(HttpStatus.CONFLICT, "The duplicate ISBN value is not allowed");
+		}
+
+	}
+
+	private void updateBook(Book bookToUpdate, BookUpdate updatedBook) {
 		bookToUpdate.setTitle(updatedBook.getTitle());
 		bookToUpdate.setAuthor(updatedBook.getAuthor());
 		bookToUpdate.setIsbn(updatedBook.getIsbn());
@@ -118,17 +131,16 @@ public class BookService {
 		bookToUpdate.setPrice(updatedBook.getPrice());
 		bookToUpdate.setUrl(updatedBook.getUrl());
 
-		Category updatedCategory = this.findCategory(updatedBook.getCategory());
+		Category updatedCategory = this.findCategory(updatedBook.getCategoryId());
 		bookToUpdate.setCategory(updatedCategory);
 		bookRepository.save(bookToUpdate);
 	}
 
-	private Category findCategory(Category updatedCategory) {
-		Long updatedCategoryId = updatedCategory.getCategoryid();
-		Optional<Category> optionalCategory = categoryRepository.findById(updatedCategoryId);
+	private Category findCategory(Long categoryId) {
+		Optional<Category> optionalCategory = categoryRepository.findById(categoryId);
 
 		if (!optionalCategory.isPresent())
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "The category wasn't found");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The category wasn't found");
 
 		Category category = optionalCategory.get();
 		return category;

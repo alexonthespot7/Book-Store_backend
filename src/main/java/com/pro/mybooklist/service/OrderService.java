@@ -158,7 +158,7 @@ public class OrderService {
 		this.checkIfBacketIsEmpty(backet);
 		this.setBacketNotCurrent(backet);
 
-		String passwordRandom = RandomStringUtils.random(15);
+		String passwordRandom = RandomStringUtils.randomAlphanumeric(15);
 		return passwordRandom;
 	}
 

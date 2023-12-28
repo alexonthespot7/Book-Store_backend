@@ -150,7 +150,7 @@ public class UserService {
 	}
 
 	private User createUnverifiedUserBySignupCredentials(SignupCredentials credentials) {
-		String randomCode = RandomStringUtils.random(64);
+		String randomCode = RandomStringUtils.randomAlphanumeric(64);
 		String rawPassword = credentials.getPassword();
 		String hashPwd = commonService.encodePassword(rawPassword);
 
@@ -202,7 +202,7 @@ public class UserService {
 		User user = this.findUserByEmail(email);
 		this.handleAccountUnverifiedCase(user);
 
-		String password = RandomStringUtils.random(15);
+		String password = RandomStringUtils.randomAlphanumeric(15);
 
 		try {
 			mailService.sendPasswordEmail(user, password);

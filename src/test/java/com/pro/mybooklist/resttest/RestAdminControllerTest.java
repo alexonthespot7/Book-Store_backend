@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pro.mybooklist.httpforms.AccountCredentials;
+import com.pro.mybooklist.httpforms.BookUpdate;
 import com.pro.mybooklist.httpforms.OrderInfo;
 import com.pro.mybooklist.httpforms.RoleInfo;
 import com.pro.mybooklist.model.Backet;
@@ -181,7 +182,7 @@ public class RestAdminControllerTest {
 
 		@Test
 		@Rollback
-		public void testUpdateGoodCase() throws Exception {
+		public void testUpdateOrderGoodCase() throws Exception {
 			String requestURI = "/updateorder/";
 
 			Order order = createOrderWithDefaultStatusNoUser();
@@ -254,71 +255,90 @@ public class RestAdminControllerTest {
 			}
 		}
 	}
-	
+
 	@Nested
 	class testUpdateBook {
 		@Test
 		@Rollback
 		public void testUpdateBookNotFoundBookCase() throws Exception {
 			String requestURIBookNotFound = "/books/2222";
-			
+
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, 11);
 			String requestBody = objectMapper.writeValueAsString(book);
-			
-			mockMvc.perform(put(requestURIBookNotFound).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
-					.content(requestBody)).andExpect(status().isNotFound());
+
+			mockMvc.perform(put(requestURIBookNotFound).header("Authorization", jwt)
+					.contentType(MediaType.APPLICATION_JSON).content(requestBody)).andExpect(status().isNotFound());
 		}
-		
+
 		@Test
 		@Rollback
 		public void testUpdateBookCategoryNotFoundCase() throws Exception {
 			String requestURI = "/books/";
-			
+
 			Book book = createBook(BOOK_TITLE, OTHER_CATEGORY, 11);
-			Category newCategory = new Category(ROMANCE_CATEGORY);
-			newCategory.setCategoryid(11);
-			book.setCategory(newCategory);
-			
 			Long bookId = book.getId();
+
+			BookUpdate bookUpdated = new BookUpdate();
+			bookUpdated.setCategoryId(Long.valueOf(22));
+
 			String requestURIGood = requestURI + bookId;
-			String requestBodyCategoryNotFound = objectMapper.writeValueAsString(book);
-			
+			String requestBodyCategoryNotFound = objectMapper.writeValueAsString(bookUpdated);
+
+			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
+					.content(requestBodyCategoryNotFound)).andExpect(status().isBadRequest());
+		}
+
+		@Test
+		@Rollback
+		public void testUpdateBookDuplicateIsbnCase() throws Exception {
+			String requestURI = "/books/";
+
+			Book newBook = createBook(BOOK_TITLE + " 2", OTHER_CATEGORY, DEFAULT_PRICE);
+
+			Book bookToUpdate = createBook(BOOK_TITLE, OTHER_CATEGORY, 11);
+			Long bookId = bookToUpdate.getId();
+
+			BookUpdate bookUpdated = new BookUpdate();
+			bookUpdated.setIsbn(newBook.getIsbn());
+
+			String requestURIGood = requestURI + bookId;
+			String requestBodyCategoryNotFound = objectMapper.writeValueAsString(bookUpdated);
+
 			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
 					.content(requestBodyCategoryNotFound)).andExpect(status().isConflict());
 		}
-		
+
 		@Test
 		@Rollback
 		public void testUpdateBookGoodCase() throws Exception {
 			String requestURI = "/books/";
-			
+
 			Book book = createBook("WRONG", OTHER_CATEGORY, 11);
 			Category newCategory = createCategory(ROMANCE_CATEGORY);
-			
-			Book updatedBook = new Book();
-			updatedBook.setId(book.getId());
+
+			BookUpdate updatedBook = new BookUpdate();
 			updatedBook.setAuthor(FIRSTNAME);
 			updatedBook.setTitle(BOOK_TITLE);
 			updatedBook.setPrice(DEFAULT_PRICE);
 			updatedBook.setBookYear(2001);
-			updatedBook.setCategory(newCategory);
+			updatedBook.setCategoryId(newCategory.getCategoryid());
 			updatedBook.setIsbn("1234567");
 			updatedBook.setUrl("NewURL");
-			
+
 			Long bookId = book.getId();
 			String requestURIGood = requestURI + bookId;
-			String requestBody= objectMapper.writeValueAsString(updatedBook);
-			
+			String requestBody = objectMapper.writeValueAsString(updatedBook);
+
 			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody)).andExpect(status().isOk());
-			
+
 			Optional<Book> optionalUpdatedBook = bookRepository.findById(bookId);
 			assertThat(optionalUpdatedBook).isPresent();
-			updatedBook = optionalUpdatedBook.get();
-			
-			assertThat(updatedBook.getAuthor()).isEqualTo(FIRSTNAME);
-			assertThat(updatedBook.getTitle()).isEqualTo(BOOK_TITLE);
-			assertThat(updatedBook.getCategory()).isEqualTo(newCategory);
+			Book editedBook = optionalUpdatedBook.get();
+
+			assertThat(editedBook.getAuthor()).isEqualTo(FIRSTNAME);
+			assertThat(editedBook.getTitle()).isEqualTo(BOOK_TITLE);
+			assertThat(editedBook.getCategory()).isEqualTo(newCategory);
 		}
 	}
 
@@ -411,7 +431,8 @@ public class RestAdminControllerTest {
 
 		AccountCredentials creds = new AccountCredentials(ADMIN_USERNAME, DEFAULT_PASSWORD);
 		String requestBody = objectMapper.writeValueAsString(creds);
-		MvcResult result = mockMvc.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+		MvcResult result = mockMvc
+				.perform(post(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
 				.andExpect(status().isOk()).andReturn();
 
 		jwt = result.getResponse().getHeader("Authorization");

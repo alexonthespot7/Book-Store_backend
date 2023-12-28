@@ -68,7 +68,7 @@ public class BacketService {
 	// Method to create Backet with password and no user. The method returns the
 	// backet Id and its password
 	public BacketInfo createBacketNoAuthentication() {
-		String password = RandomStringUtils.random(15);
+		String password = RandomStringUtils.randomAlphanumeric(15);
 		String hashedPassword = commonService.encodePassword(password);
 		Long backetId = this.createBacket(hashedPassword);
 
