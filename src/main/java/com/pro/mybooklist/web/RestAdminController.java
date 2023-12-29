@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pro.mybooklist.httpforms.BookUpdate;
 import com.pro.mybooklist.httpforms.OrderInfo;
-import com.pro.mybooklist.httpforms.RoleInfo;
+import com.pro.mybooklist.httpforms.RoleVerificationInfo;
 import com.pro.mybooklist.model.Order;
 import com.pro.mybooklist.model.User;
 import com.pro.mybooklist.service.BookService;
@@ -75,11 +75,11 @@ public class RestAdminController {
 
 	}
 
-	@PutMapping("/changerole/{userid}")
-	public ResponseEntity<?> changeUserRole(@PathVariable("userid") Long userId, @RequestBody RoleInfo roleInfo,
+	@PutMapping("/verifyandchangerole/{userid}")
+	public ResponseEntity<?> changeUserRoleAndVerification(@PathVariable("userid") Long userId, @RequestBody RoleVerificationInfo roleVerificationInfo,
 			Authentication authentication) {
 
-		return userService.changeUserRole(userId, roleInfo, authentication);
+		return userService.changeUserRoleAndVerification(userId, roleVerificationInfo, authentication);
 
 	}
 }

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pro.mybooklist.httpforms.AccountCredentials;
 import com.pro.mybooklist.httpforms.BookUpdate;
 import com.pro.mybooklist.httpforms.OrderInfo;
-import com.pro.mybooklist.httpforms.RoleInfo;
+import com.pro.mybooklist.httpforms.RoleVerificationInfo;
 import com.pro.mybooklist.model.Backet;
 import com.pro.mybooklist.model.BacketBook;
 import com.pro.mybooklist.model.BacketBookRepository;
@@ -195,7 +195,7 @@ public class RestAdminControllerTest {
 
 			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody)).andExpect(status().isOk());
-			
+
 			List<Order> orders = (List<Order>) orepository.findAll();
 			assertThat(orders).hasSize(1);
 			Order updatedOrder = orders.get(0);
@@ -211,14 +211,14 @@ public class RestAdminControllerTest {
 	}
 
 	@Nested
-	class testChangeUserRole {
+	class testChangeUserRoleAndVerification {
 		@Test
 		@Rollback
-		public void testChangeUserRoleUserNotFoundCase() throws Exception {
-			String requestURIUserNotFound = "/changerole/22";
+		public void testChangeUserRoleAndVerificationUserNotFoundCase() throws Exception {
+			String requestURIUserNotFound = "/verifyandchangerole/22";
 
-			RoleInfo roleInfo = new RoleInfo("ADMIN");
-			String requestBody = objectMapper.writeValueAsString(roleInfo);
+			RoleVerificationInfo roleVerificationInfo = new RoleVerificationInfo("ADMIN", false);
+			String requestBody = objectMapper.writeValueAsString(roleVerificationInfo);
 
 			mockMvc.perform(put(requestURIUserNotFound).header("Authorization", jwt)
 					.contentType(MediaType.APPLICATION_JSON).content(requestBody)).andExpect(status().isNotFound());
@@ -226,13 +226,13 @@ public class RestAdminControllerTest {
 
 		@Test
 		@Rollback
-		public void testChangeUserRoleTryingToChangeOwnRoleCase() throws Exception {
-			String requestURI = "/changerole/";
+		public void testChangeUserRoleAndVerificationTryingToChangeOwnRoleCase() throws Exception {
+			String requestURI = "/verifyandchangerole/";
 
 			String requestURIOwnRole = requestURI + adminId;
 
-			RoleInfo roleInfo = new RoleInfo("USER");
-			String requestBody = objectMapper.writeValueAsString(roleInfo);
+			RoleVerificationInfo roleVerificationInfo = new RoleVerificationInfo("USER", false);
+			String requestBody = objectMapper.writeValueAsString(roleVerificationInfo);
 
 			mockMvc.perform(put(requestURIOwnRole).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody)).andExpect(status().isNotAcceptable());
@@ -240,24 +240,50 @@ public class RestAdminControllerTest {
 
 		@Test
 		@Rollback
-		public void testChangeUserRoleGoodCase() throws Exception {
-			String requestURI = "/changerole/";
+		public void testChangeUserRoleAndVerificationGoodCases() throws Exception {
+			String requestURI = "/verifyandchangerole/";
 
 			User user = createUser(USERNAME, EMAIL);
 			Long userId = user.getId();
 
 			String requestURIGood = requestURI + userId;
 
-			RoleInfo roleInfo = new RoleInfo("ADMIN");
-			String requestBody = objectMapper.writeValueAsString(roleInfo);
+			// changing role and not verification
+
+			RoleVerificationInfo roleVerificationInfo = new RoleVerificationInfo("ADMIN", false);
+			String requestBody = objectMapper.writeValueAsString(roleVerificationInfo);
 
 			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
 					.content(requestBody)).andExpect(status().isOk());
 
-			List<User> users = (List<User>) urepository.findAll();
-			for (User admin : users) {
-				assertThat(admin.getRole()).isEqualTo("ADMIN");
-			}
+			Optional<User> optionalUser = urepository.findById(userId);
+			assertThat(optionalUser).isPresent();
+			user = optionalUser.get();
+			assertThat(user.getRole()).isEqualTo("ADMIN");
+
+			// verifying user:
+			roleVerificationInfo.setAccountVerified(true);
+			requestBody = objectMapper.writeValueAsString(roleVerificationInfo);
+
+			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
+					.content(requestBody)).andExpect(status().isOk());
+
+			optionalUser = urepository.findById(userId);
+			assertThat(optionalUser).isPresent();
+			user = optionalUser.get();
+			assertThat(user.isAccountVerified()).isTrue();
+
+			// Can't change verified user's verification case:
+			roleVerificationInfo.setAccountVerified(false);
+			requestBody = objectMapper.writeValueAsString(roleVerificationInfo);
+
+			mockMvc.perform(put(requestURIGood).header("Authorization", jwt).contentType(MediaType.APPLICATION_JSON)
+					.content(requestBody)).andExpect(status().isOk());
+
+			optionalUser = urepository.findById(userId);
+			assertThat(optionalUser).isPresent();
+			user = optionalUser.get();
+			assertThat(user.isAccountVerified()).isTrue();
 		}
 	}
 

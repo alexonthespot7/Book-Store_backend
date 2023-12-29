@@ -20,7 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.pro.mybooklist.httpforms.AccountCredentials;
 import com.pro.mybooklist.httpforms.EmailInfo;
 import com.pro.mybooklist.httpforms.PasswordInfo;
-import com.pro.mybooklist.httpforms.RoleInfo;
+import com.pro.mybooklist.httpforms.RoleVerificationInfo;
 import com.pro.mybooklist.httpforms.SignupCredentials;
 import com.pro.mybooklist.httpforms.TokenInfo;
 import com.pro.mybooklist.model.User;
@@ -262,16 +262,22 @@ public class UserService {
 		return new ResponseEntity<>("The password was changed", HttpStatus.OK);
 	}
 
-	// Method to change user's role:
-	public ResponseEntity<?> changeUserRole(Long userId, RoleInfo roleInfo, Authentication authentication) {
+	// Method to change user's role and verification:
+	public ResponseEntity<?> changeUserRoleAndVerification(Long userId, RoleVerificationInfo roleVerificationInfo,
+			Authentication authentication) {
 		User admin = commonService.checkAuthentication(authentication);
 		Long adminId = admin.getId();
 		User userToChange = this.findUserByUserId(userId);
 
 		if (adminId == userId)
-			return new ResponseEntity<>("You can't change your own role", HttpStatus.NOT_ACCEPTABLE);
+			return new ResponseEntity<>("You can't change your own role/verification", HttpStatus.NOT_ACCEPTABLE);
 
-		this.setRole(roleInfo, userToChange);
+		String role = roleVerificationInfo.getRole();
+		boolean isAccountVerified = roleVerificationInfo.isAccountVerified();
+		userToChange.setRole(role);
+		this.updateVerification(isAccountVerified, userToChange);
+		userRepository.save(userToChange);
+
 		return new ResponseEntity<>("Role of the user was successfully changed", HttpStatus.OK);
 	}
 
@@ -285,10 +291,11 @@ public class UserService {
 		return user;
 	}
 
-	private void setRole(RoleInfo roleInfo, User user) {
-		String role = roleInfo.getRole();
-		user.setRole(role);
-		userRepository.save(user);
+	private void updateVerification(boolean isAccountVerified, User user) {
+		if (isAccountVerified != user.isAccountVerified() && !user.isAccountVerified()) {
+			user.setAccountVerified(isAccountVerified);
+			user.setVerificationCode(null);
+		}
 	}
 
 	// Handling user is not verified case: if smtp service is working (then
