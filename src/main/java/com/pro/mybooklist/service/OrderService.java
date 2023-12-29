@@ -191,7 +191,7 @@ public class OrderService {
 
 	private void updateOrder(Order order, OrderInfo orderInfo, Long orderId)
 			throws MessagingException, UnsupportedEncodingException {
-		order = this.updateOrderFieldsExceptEmailAndStatus(order, orderInfo);
+		this.updateOrderFieldsExceptEmailAndStatus(order, orderInfo);
 		order = this.handleEmailChangedCase(order, orderInfo, orderId);
 		order = this.handleStatusChangedCase(order, orderInfo, orderId);
 

@@ -24,16 +24,16 @@ public class Order {
 	@Column(name = "lastname")
 	private String lastname;
 	
-	@Column(nullable = false, updatable = false)
+	@Column(nullable = false)
 	private String country;
 	
-	@Column(nullable = false, updatable = false)
+	@Column(nullable = false)
 	private String city;
 	
-	@Column(nullable = false, updatable = false)
+	@Column(nullable = false)
 	private String street;
 	
-	@Column(nullable = false, updatable = false)
+	@Column(nullable = false)
 	private String postcode;
 	
 	@Column(name="status", nullable = false, updatable = true)
@@ -44,7 +44,7 @@ public class Order {
 	
 	@Column(name = "note")
 	private String note;
-	
+
 	@Column(name = "password")
 	private String password;
 	
@@ -55,7 +55,6 @@ public class Order {
 	public Order() {}
 
 	public Order(String firstname, String lastname, String country, String city, String street, String postcode, String status, String email, Backet backet, String password) {
-		super();
 		this.firstname = firstname;
 		this.lastname = lastname;
 		this.country = country;
