@@ -151,7 +151,7 @@ public class RestAuthenticatedControllerTest {
 
 		@Test
 		@Rollback
-		public void testGetUserByIdIdGooCase() throws Exception {
+		public void testGetUserByIdIdGoodCase() throws Exception {
 			String requestURI = "/users/";
 
 			String requestURIGood = requestURI + authenticatedUserId;
