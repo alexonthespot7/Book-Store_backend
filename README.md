@@ -1,10 +1,8 @@
 # Book-Store_backend
 > Utilizing Java Spring Boot, the back-end of the Bookstore project offers a comprehensive RESTful API, serving as the foundation for managing book-related interactions, including inventory, user transactions, and essential bookstore functionalities.
+> 
 > The front-end side of this project is available [here](https://github.com/alexonthespot7/Book-Store_frontend).<br>
->
-> The deployed back-end side of the application can be found [here](https://book-store-fc07569e741d.herokuapp.com).<br>
-> <br>
-> Fully deployed app with client- and server-sides: [https://bookstore-axos.netlify.app/](https://bookstore-axos.netlify.app/)
+
 
 ## Table of Contents
 * [Usage Guide](#usage-guide)
